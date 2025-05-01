@@ -289,14 +289,14 @@ function enemyCoalition() {
             const enemigo = enemigos[j];
 
             const d2 = esfera.collider.center.distanceToSquared(enemigo.collider.center);
-            const r = esfera.collider.radius + enemigo.collider.radius;
+            const r = 1
             const r2 = r * r;
 
             if (d2 < r2) {
                 console.log(`¡La esfera ${i} golpeó al enemigo ${j}!`);
 
                 // Aquí puedes eliminar el enemigo o realizar alguna acción
-                scene.remove(enemigo);
+                scene.remove(enemigo.mesh);
                 enemigos.splice(j, 1);
                 j--; // Corrige índice por eliminación
             }
@@ -467,21 +467,38 @@ function colocarEnemigos(min, size, cantidad) {
 
             // Establecemos la posición en las coordenadas calculadas
             clon.position.set(x, 0.1, z);
-            clon.scale.set(0.011, 0.011, 0.011);
+            clon.scale.set(0.008, 0.008, 0.008);
 
             // Añadimos el clon a la escena
             scene.add(clon);
-            
+
             // Agregar collider al enemigo
             clon.collider = {
                 center: clon.position.clone(),
-                radius: 5 
+                radius: 5
             };
 
-            enemigos.push(clon);
+            enemigos.push({
+                mesh: clon,
+                collider: new THREE.Sphere(clon.position.clone(), 5),
+            });
         } else {
             console.warn('modeloBase no está definido al intentar clonar.');
         }
+    }
+}
+
+function updateEnemigos(deltaTime) {
+    for (const enemigo of enemigos) {
+        const direccion = new THREE.Vector3().subVectors(playerCollider.end, enemigo.collider.center);
+        direccion.y = 0; // Opcional: evita que suban/bajen en el eje Y
+        direccion.normalize();
+
+        const velocidad = 3; // Ajusta la velocidad del zombi
+        enemigo.collider.center.addScaledVector(direccion, velocidad * deltaTime);
+
+        // Actualiza la posición del mesh del enemigo
+        enemigo.mesh.position.copy(enemigo.collider.center);
     }
 }
 
@@ -515,7 +532,30 @@ function animate() {
 
         teleportPlayerIfOob();
 
+        //console.log(playerCollider);
+
     }
+    
+    // Actualizar la posición de los enemigos
+    const velocidadZombie = 0.02;
+
+    enemigos.forEach((enemigo) => {
+        const direccion = new THREE.Vector3();
+        direccion.subVectors(playerCollider.end, enemigo.mesh.position);
+        const distancia = direccion.length();
+
+        if (distancia > 1) {
+            direccion.normalize();
+
+            enemigo.mesh.position.x += direccion.x * velocidadZombie;
+            enemigo.mesh.position.z += direccion.z * velocidadZombie;
+
+            enemigo.mesh.position.y = 0.1;
+
+            // Actualizar collider
+            enemigo.collider.center.copy(enemigo.mesh.position);
+        }
+    });
 
     renderer.render(scene, camera);
 
