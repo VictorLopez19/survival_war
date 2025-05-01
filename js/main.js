@@ -4,6 +4,7 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { DRACOLoader } from 'three/addons/loaders/DRACOLoader.js';
 import { Octree } from 'three/addons/math/Octree.js';
 import { Capsule } from 'three/addons/math/Capsule.js';
+import * as SkeletonUtils from 'three/addons/utils/SkeletonUtils.js';
 
 const clock = new THREE.Clock();
 
@@ -377,59 +378,76 @@ function controls(deltaTime) {
 }
 
 const loader = new GLTFLoader().setPath('./models/gltf/');
+const loaderEne = new GLTFLoader();
 
+const modeloRuta = './models/gltf/Zombi.glb';
+let modeloBase = null;
+
+// Cargar mapa
 loader.load('mapa_op.glb', (gltf) => {
     document.getElementById('loadingMessage').classList.add('hidden');
 
     const mapa = gltf.scene;
-
-    mapa.scale.set(0.7, 0.7, 0.7); // Se escala el modelo
+    mapa.scale.set(0.7, 0.7, 0.7);
 
     scene.add(mapa);
     worldOctree.fromGraphNode(mapa);
 
-    // Calcular límites del mapa
+    gltf.scene.traverse(child => {
+        if (child.isMesh) {
+            child.castShadow = true;
+            child.receiveShadow = true;
+            if (child.material.map) {
+                child.material.map.anisotropy = 4;
+            }
+        }
+    });
+
     const box = new THREE.Box3().setFromObject(mapa);
     const size = new THREE.Vector3();
     box.getSize(size);
     const min = box.min;
 
-    // Colocar enemigos en cualquier parte del mapa
-    colocarEnemigos(min, size, 120); 
+    // Aquí ya está cargado el mapa. Ahora carga el modelo de enemigo.
+    loaderEne.load(modeloRuta, (gltfEnemy) => {
+        modeloBase = gltfEnemy.scene.children[0];
 
-    gltf.scene.traverse(child => {
-
-        if (child.isMesh) {
-
-            child.castShadow = true;
-            child.receiveShadow = true;
-
-            if (child.material.map) {
-
-                child.material.map.anisotropy = 4;
-
-            }
-
-        }
-
+        // Ya se puede colocar porque el mapa existe
+        colocarEnemigos(min, size, 60);
     });
+
 });
 
+// Función para colocar enemigos
 function colocarEnemigos(min, size, cantidad) {
-    const redMaterial = new THREE.MeshBasicMaterial({ color: 0xff0000 });
-    const squareGeometry = new THREE.BoxGeometry(1, 1, 1);
-
     for (let i = 0; i < cantidad; i++) {
-        const cube = new THREE.Mesh(squareGeometry, redMaterial);
+        if (modeloBase) {
+            // Clonamos el modelo base con un clon profundo para asegurar que materiales y geometrías se copien correctamente
+            const clon = SkeletonUtils.clone(modeloBase);
 
-        const x = min.x + Math.random() * size.x;
-        const z = min.z + Math.random() * size.z;
+            // Clonar materiales y geometrías para evitar referencias compartidas
+            clon.traverse((node) => {
+                if (node.isMesh) {
+                    node.material = node.material.clone();
+                    node.geometry = node.geometry.clone();
+                }
+            });
 
-        cube.position.set(x, 0.5, z); // Y=0.5 para que esté sobre el suelo
-        scene.add(cube);
+            // Generamos las posiciones aleatorias
+            const x = min.x + Math.random() * size.x;
+            const z = min.z + Math.random() * size.z;
+
+            // Establecemos la posición en las coordenadas calculadas
+            clon.position.set(x, 0.1, z);
+            clon.scale.set(0.011, 0.011, 0.011);
+            
+            // Añadimos el clon a la escena
+            scene.add(clon);
+        } else {
+            console.warn('modeloBase no está definido al intentar clonar.');
+        }
     }
 }
-
 
 function teleportPlayerIfOob() {
 
