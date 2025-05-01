@@ -57,6 +57,7 @@ const sphereMaterial = new THREE.MeshLambertMaterial({ color: 0xdede8d });
 
 const spheres = [];
 const enemigos = [];
+const mixers = [];
 let sphereIdx = 0;
 
 for (let i = 0; i < NUM_SPHERES; i++) {
@@ -408,6 +409,7 @@ const loaderEne = new GLTFLoader();
 
 const modeloRuta = './models/gltf/Zombi.glb';
 let modeloBase = null;
+let modeloAnimations = [];
 
 // Cargar mapa
 loader.load('mapa_op.glb', (gltf) => {
@@ -436,10 +438,12 @@ loader.load('mapa_op.glb', (gltf) => {
 
     // Aquí ya está cargado el mapa. Ahora carga el modelo de enemigo.
     loaderEne.load(modeloRuta, (gltfEnemy) => {
-        modeloBase = gltfEnemy.scene.children[0];
+        modeloBase = gltfEnemy.scene;
+        modeloAnimations = gltfEnemy.animations;
 
         // Ya se puede colocar porque el mapa existe
         colocarEnemigos(min, size, 60);
+
     });
 
 });
@@ -467,7 +471,29 @@ function colocarEnemigos(min, size, cantidad) {
 
             // Establecemos la posición en las coordenadas calculadas
             clon.position.set(x, 0.1, z);
-            clon.scale.set(0.008, 0.008, 0.008);
+            clon.scale.set(1, 1, 1);
+
+            const mixer = new THREE.AnimationMixer(clon);
+
+            // Crear objeto de acciones con las animaciones disponibles
+            const actions = {
+                Walk: mixer.clipAction(THREE.AnimationClip.findByName(modeloAnimations, 'WALK')),
+                Attack: mixer.clipAction(THREE.AnimationClip.findByName(modeloAnimations, 'ATTACK')),
+                Dying: mixer.clipAction(THREE.AnimationClip.findByName(modeloAnimations, 'DYING'))
+            };
+
+            // Reproducir animación por defecto (WALK)
+            if (actions.Walk) {
+                actions.Walk.setLoop(THREE.LoopRepeat, Infinity);  // Repetir indefinidamente
+                actions.Walk.timeScale = 20;
+                actions.Walk.play();
+            }
+
+            // Guardar el mixer para actualizarlo en el bucle de render
+            mixers.push(mixer);
+
+            // También puedes guardar las acciones si más adelante cambias de estado
+            clon.userData = { actions };
 
             // Añadimos el clon a la escena
             scene.add(clon);
@@ -485,20 +511,6 @@ function colocarEnemigos(min, size, cantidad) {
         } else {
             console.warn('modeloBase no está definido al intentar clonar.');
         }
-    }
-}
-
-function updateEnemigos(deltaTime) {
-    for (const enemigo of enemigos) {
-        const direccion = new THREE.Vector3().subVectors(playerCollider.end, enemigo.collider.center);
-        direccion.y = 0; // Opcional: evita que suban/bajen en el eje Y
-        direccion.normalize();
-
-        const velocidad = 3; // Ajusta la velocidad del zombi
-        enemigo.collider.center.addScaledVector(direccion, velocidad * deltaTime);
-
-        // Actualiza la posición del mesh del enemigo
-        enemigo.mesh.position.copy(enemigo.collider.center);
     }
 }
 
@@ -535,27 +547,37 @@ function animate() {
         //console.log(playerCollider);
 
     }
-    
+
     // Actualizar la posición de los enemigos
     const velocidadZombie = 0.02;
 
     enemigos.forEach((enemigo) => {
         const direccion = new THREE.Vector3();
-        direccion.subVectors(playerCollider.end, enemigo.mesh.position);
+        direccion.subVectors(playerCollider.end, enemigo.mesh.position);  // Direccion hacia el jugador
         const distancia = direccion.length();
 
         if (distancia > 1) {
-            direccion.normalize();
+            direccion.normalize();  // Normalizamos la dirección para no movernos más rápido en diagonal
 
+            // Actualizar la posición del enemigo
             enemigo.mesh.position.x += direccion.x * velocidadZombie;
             enemigo.mesh.position.z += direccion.z * velocidadZombie;
 
+            // Asegurarse de que el enemigo siempre esté cerca del suelo
             enemigo.mesh.position.y = 0.1;
 
             // Actualizar collider
             enemigo.collider.center.copy(enemigo.mesh.position);
+
+            // Calcular la rotación del enemigo hacia el jugador
+            const angulo = Math.atan2(direccion.x, direccion.z);  // Calculamos el ángulo en radianes
+            enemigo.mesh.rotation.y = angulo;  // Aplicamos la rotación en el eje Y
         }
     });
+
+    // Actualizar animaciones
+    const delta = clock.getDelta();
+    mixers.forEach(mixer => mixer.update(delta));
 
     renderer.render(scene, camera);
 
