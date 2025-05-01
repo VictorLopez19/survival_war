@@ -19,7 +19,7 @@ const fillLight1 = new THREE.HemisphereLight(0x8dc1de, 0x00668d, 1.5);
 fillLight1.position.set(2, 1, 1);
 scene.add(fillLight1);
 
-const directionalLight = new THREE.DirectionalLight(0xfffff, 2.5);
+const directionalLight = new THREE.DirectionalLight(0xffffff, 2.5);
 directionalLight.position.set(25, 25, 25);
 directionalLight.castShadow = true;
 directionalLight.shadow.camera.near = 0.01;
@@ -56,6 +56,7 @@ const sphereGeometry = new THREE.IcosahedronGeometry(SPHERE_RADIUS, 5);
 const sphereMaterial = new THREE.MeshLambertMaterial({ color: 0xdede8d });
 
 const spheres = [];
+const enemigos = [];
 let sphereIdx = 0;
 
 for (let i = 0; i < NUM_SPHERES; i++) {
@@ -279,6 +280,30 @@ function spheresCollisions() {
 
 }
 
+// Verifica si alguna esfera golpea a algún enemigo
+function enemyCoalition() {
+    for (let i = 0; i < spheres.length; i++) {
+        const esfera = spheres[i];
+
+        for (let j = 0; j < enemigos.length; j++) {
+            const enemigo = enemigos[j];
+
+            const d2 = esfera.collider.center.distanceToSquared(enemigo.collider.center);
+            const r = esfera.collider.radius + enemigo.collider.radius;
+            const r2 = r * r;
+
+            if (d2 < r2) {
+                console.log(`¡La esfera ${i} golpeó al enemigo ${j}!`);
+
+                // Aquí puedes eliminar el enemigo o realizar alguna acción
+                scene.remove(enemigo);
+                enemigos.splice(j, 1);
+                j--; // Corrige índice por eliminación
+            }
+        }
+    }
+}
+
 function updateSpheres(deltaTime) {
 
     spheres.forEach(sphere => {
@@ -306,6 +331,7 @@ function updateSpheres(deltaTime) {
     });
 
     spheresCollisions();
+    enemyCoalition();
 
     for (const sphere of spheres) {
 
@@ -430,6 +456,8 @@ function colocarEnemigos(min, size, cantidad) {
                 if (node.isMesh) {
                     node.material = node.material.clone();
                     node.geometry = node.geometry.clone();
+                    node.castShadow = true;
+                    node.receiveShadow = true;
                 }
             });
 
@@ -440,9 +468,17 @@ function colocarEnemigos(min, size, cantidad) {
             // Establecemos la posición en las coordenadas calculadas
             clon.position.set(x, 0.1, z);
             clon.scale.set(0.011, 0.011, 0.011);
-            
+
             // Añadimos el clon a la escena
             scene.add(clon);
+            
+            // Agregar collider al enemigo
+            clon.collider = {
+                center: clon.position.clone(),
+                radius: 5 
+            };
+
+            enemigos.push(clon);
         } else {
             console.warn('modeloBase no está definido al intentar clonar.');
         }
