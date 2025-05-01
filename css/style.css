@@ -1,0 +1,132 @@
+html, body {
+    height: 100%;
+    margin: 0;
+    overflow: hidden;
+}
+
+body {
+    display: flex;
+    flex-direction: column;
+}
+
+#three-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    height: 60vh !important;
+    flex: 1;
+    position: relative;
+    overflow: hidden;
+    z-index: 0 !important;
+}
+
+#three-container div {
+    width: 100%;
+    height: 100%;
+}
+
+#three-container div div{
+    height: auto;
+    width: auto;
+    z-index: 0 !important;
+    top: 55px !important;
+}
+
+#three-container canvas {
+    z-index: 10 !important;
+}
+
+#three-container div div {
+    height: auto;
+    width: auto;
+    z-index: 0 !important;
+    top: 55px !important;
+}
+
+#blocker {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 15 !important;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+}
+
+#instructions {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    font-size: 14px;
+    cursor: pointer;
+}
+
+.allow-touch-styles {
+    top: 55px !important;
+    right: 0px !important;
+}
+
+#informacion {
+    font-size: 13px;
+    text-align: justify;
+}
+
+.botones, .control {
+    font-size: 12px;
+}
+
+#loadingMessage {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 9999;
+    display: flex !important;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    background-color: rgba(255, 255, 255, 0.9);
+    padding: 20px 30px;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    opacity: 1;
+    transition: opacity 0.5s ease;
+}
+
+#loadingMessage.hidden {
+    opacity: 0;
+    pointer-events: none;
+}
+
+.spinner {
+    border: 4px solid rgba(255, 255, 255, 0.3);
+    border-top: 4px solid #000;
+    border-radius: 50%;
+    width: 50px;
+    height: 50px;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+#loadingMessage p {
+    margin-top: 10px;
+    font-weight: bold;
+    font-size: 16px;
+}
+
+footer {
+    height: auto;
+}
+
