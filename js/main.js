@@ -388,6 +388,15 @@ loader.load('mapa_op.glb', (gltf) => {
     scene.add(mapa);
     worldOctree.fromGraphNode(mapa);
 
+    // Calcular límites del mapa
+    const box = new THREE.Box3().setFromObject(mapa);
+    const size = new THREE.Vector3();
+    box.getSize(size);
+    const min = box.min;
+
+    // Colocar enemigos en cualquier parte del mapa
+    colocarEnemigos(min, size, 120); 
+
     gltf.scene.traverse(child => {
 
         if (child.isMesh) {
@@ -406,36 +415,21 @@ loader.load('mapa_op.glb', (gltf) => {
     });
 });
 
-// Configure and create Draco decoder.
-/*const dracoLoader = new DRACOLoader();
-dracoLoader.setDecoderPath('jsm/libs/draco/');
-dracoLoader.setDecoderConfig({ type: 'js' });
+function colocarEnemigos(min, size, cantidad) {
+    const redMaterial = new THREE.MeshBasicMaterial({ color: 0xff0000 });
+    const squareGeometry = new THREE.BoxGeometry(1, 1, 1);
 
-const loader = new GLTFLoader();
-loader.setDRACOLoader(dracoLoader);
+    for (let i = 0; i < cantidad; i++) {
+        const cube = new THREE.Mesh(squareGeometry, redMaterial);
 
-loader.load('./models/gltf/mapa_draco.glb', function (gltf) {
+        const x = min.x + Math.random() * size.x;
+        const z = min.z + Math.random() * size.z;
 
-    document.getElementById('loadingMessage').classList.add('hidden');
+        cube.position.set(x, 0.5, z); // Y=0.5 para que esté sobre el suelo
+        scene.add(cube);
+    }
+}
 
-    const mapa = gltf.scene;
-    mapa.scale.set(0.7, 0.7, 0.7);
-
-    scene.add(mapa);
-    worldOctree.fromGraphNode(mapa);
-
-    gltf.scene.traverse(child => {
-        if (child.isMesh) {
-            child.castShadow = true;
-            child.receiveShadow = true;
-
-            if (child.material.map) {
-                child.material.map.anisotropy = 4;
-            }
-        }
-    });
-
-});*/
 
 function teleportPlayerIfOob() {
 
