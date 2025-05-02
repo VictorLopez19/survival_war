@@ -151,14 +151,14 @@ function throwBall() {
 
     sphere.collider.center.copy(playerCollider.end).addScaledVector(playerDirection, playerCollider.radius * 1.5);
     sphere.isOnGround = false;
-    
+
     if (!scene.children.includes(sphere.mesh)) {
         scene.add(sphere.mesh)
-    } 
+    }
 
     // throw the ball with more force if we hold the button longer, and if we move forward
 
-    const impulse = 15 + 30 * (1 - Math.exp((mouseTime - performance.now()) * 0.001));
+    const impulse = 25 + 30 * (1 - Math.exp((mouseTime - performance.now()) * 0.001));
 
     sphere.velocity.copy(playerDirection).multiplyScalar(impulse);
     sphere.velocity.addScaledVector(playerVelocity, 2);
@@ -293,26 +293,29 @@ function spheresCollisions() {
 function enemyCoalition() {
     for (let i = spheres.length - 1; i >= 0; i--) {
         const esfera = spheres[i];
-
-        // Si la esfera está en el piso, ignorarla
         if (esfera.isOnGround) continue;
 
         for (let j = 0; j < enemigos.length; j++) {
             const enemigo = enemigos[j];
 
-            const d2 = esfera.collider.center.distanceToSquared(enemigo.collider.center);
-            const r = 1.5;
-            const r2 = r * r;
+            const dx = esfera.collider.center.x - enemigo.collider.center.x;
+            const dy = esfera.collider.center.y - enemigo.collider.center.y;
+            const dz = esfera.collider.center.z - enemigo.collider.center.z;
 
-            if (d2 < r2) {
+            const rx = 0.5;  // ancho (X)
+            const ry = 1.9;  // alto (Y), ajustable según tamaño del enemigo
+            const rz = 0.5; // largo (Z)
+
+            const elipsoide = (dx * dx) / (rx * rx) + (dy * dy) / (ry * ry) + (dz * dz) / (rz * rz);
+
+            if (elipsoide < 1) {
                 enemigo.dead = true;
                 scene.remove(esfera.mesh);
-                break; // Salir del loop de enemigos, ya que la esfera fue eliminada
+                break;
             }
         }
     }
 }
-
 
 function updateSpheres(deltaTime) {
 
@@ -349,11 +352,11 @@ function updateSpheres(deltaTime) {
         const damping = Math.exp(- 1.5 * deltaTime) - 1;
         sphere.velocity.addScaledVector(sphere.velocity, damping);
 
-        playerSphereCollision(sphere);
+       //playerSphereCollision(sphere);
 
     });
 
-    spheresCollisions();
+    //spheresCollisions();
     enemyCoalition();
 
     for (const sphere of spheres) {
@@ -511,7 +514,7 @@ function colocarEnemigos(min, size, cantidad) {
             // Reproducir animación por defecto (WALK)
             if (actions.Walk) {
                 actions.Walk.setLoop(THREE.LoopRepeat, Infinity);  // Repetir indefinidamente
-                actions.Walk.timeScale = 20;
+                actions.Walk.timeScale = 2;
                 actions.Walk.play();
             }
 
@@ -571,7 +574,8 @@ function nuevaPosicion(enemy) {
 }
 
 function animate() {
-    const deltaTime = Math.min(0.05, clock.getDelta()) / STEPS_PER_FRAME;
+    const delta = clock.getDelta();
+    const deltaTime = Math.min(0.05, delta) / STEPS_PER_FRAME;
 
     // we look for collisions in substeps to mitigate the risk of
     // an object traversing another too quickly for detection.
@@ -601,7 +605,7 @@ function animate() {
 
         if (enemigo.dead) {
             const clipDuracion = acciones.Dying.getClip().duration;
-            const timeScale = acciones.Dying.timeScale || 1;
+            //const timeScale = acciones.Dying.timeScale || 1;
             const tiempoActual = acciones.Dying.time;
 
             if (acciones && !acciones.Dying.isRunning() && !isAnimating(acciones)) {
@@ -615,7 +619,7 @@ function animate() {
                 acciones.Dying.reset();
                 acciones.Dying.setLoop(THREE.LoopOnce, 1);   // Solo una vez
                 acciones.Dying.clampWhenFinished = true;     // Se detiene en el último frame
-                acciones.Dying.timeScale = 20;
+                acciones.Dying.timeScale = 2;
                 acciones.Dying.play();
 
             }
@@ -654,7 +658,7 @@ function animate() {
                 acciones.Attack.stop();        // Detén WALK si está activa
                 acciones.Walk.reset();
                 acciones.Walk.setLoop(THREE.LoopRepeat, Infinity);  // Repetir indefinidamente
-                acciones.Walk.timeScale = 20;
+                acciones.Walk.timeScale = 2;
                 acciones.Walk.play();
             }
 
@@ -664,14 +668,13 @@ function animate() {
                 acciones.Walk.stop();
                 acciones.Attack.reset();
                 acciones.Attack.setLoop(THREE.LoopRepeat, Infinity);  // Repetir indefinidamente
-                acciones.Attack.timeScale = 18;
+                acciones.Attack.timeScale = 1;
                 acciones.Attack.play();
             }
         }
     });
 
     // Actualizar animaciones
-    const delta = clock.getDelta();
     mixers.forEach(mixer => mixer.update(delta));
 
     renderer.render(scene, camera);
