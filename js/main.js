@@ -317,6 +317,32 @@ function enemyCoalition() {
     }
 }
 
+
+function enemyCollisions(enemigo) {
+        // Tomar los valores del objeto enemigo
+        const x = enemigo.collider.center.x;        // Posición en X
+        const y = enemigo.collider.center.y + 2;    // Posición en Y
+        const z = enemigo.collider.center.z;        // Posición en Z
+    
+        const radio = 0.9;  // Tamaño en radio para la esfera
+    
+        // Crear una esfera con la posición y radio del enemigo
+        const esferaCollider = new THREE.Sphere(new THREE.Vector3(x, y, z), radio);
+    
+        // Usar el método sphereIntersect para verificar si la esfera colisiona con alguna pared
+        const result = worldOctree.sphereIntersect(esferaCollider);
+    
+        if (result) {
+            // Opción para mover al enemigo fuera de la colisión, si es necesario
+            enemigo.collider.center.addScaledVector(result.normal, result.depth);
+    
+            return true;  // Retorna true si se detectó la colisión
+        }
+    
+        // Retorna false si no se detectó colisión
+        return false;
+}
+
 function updateSpheres(deltaTime) {
 
     spheres.forEach(sphere => {
@@ -352,7 +378,7 @@ function updateSpheres(deltaTime) {
         const damping = Math.exp(- 1.5 * deltaTime) - 1;
         sphere.velocity.addScaledVector(sphere.velocity, damping);
 
-       //playerSphereCollision(sphere);
+        //playerSphereCollision(sphere);
 
     });
 
@@ -470,7 +496,7 @@ loader.load('mapa_op.glb', (gltf) => {
         modeloAnimations = gltfEnemy.animations;
 
         // Ya se puede colocar porque el mapa existe
-        colocarEnemigos(min, size, 60);
+        colocarEnemigos(min, size, 100);
 
     });
 
@@ -533,7 +559,7 @@ function colocarEnemigos(min, size, cantidad) {
             // Agregar collider al enemigo
             clon.collider = {
                 center: clon.position.clone(),
-                radius: 5
+                radius: 5,
             };
 
             enemigos.push({
@@ -595,13 +621,18 @@ function animate() {
     }
 
     // Actualizar la posición de los enemigos
-    const velocidadZombie = 0.02;
+    const velocidadZombie = 0.01;
 
     enemigos.forEach((enemigo) => {
         const direccion = new THREE.Vector3();
         direccion.subVectors(playerCollider.end, enemigo.mesh.position);  // Direccion hacia el jugador
         const distancia = direccion.length();
         const acciones = enemigo.mesh.userData.actions;
+
+        // Si el enemigo choca con una pared se genera en una nueva posición
+        if (enemyCollisions(enemigo, deltaTime)) {
+            nuevaPosicion(enemigo.mesh)
+        }
 
         if (enemigo.dead) {
             const clipDuracion = acciones.Dying.getClip().duration;
