@@ -47,8 +47,8 @@ container.appendChild(renderer.domElement);
 
 const GRAVITY = 30;
 
-const NUM_SPHERES = 100;
-const SPHERE_RADIUS = 0.2;
+const NUM_SPHERES = 10;
+const SPHERE_RADIUS = 0.1;
 
 const STEPS_PER_FRAME = 5;
 
@@ -71,7 +71,8 @@ for (let i = 0; i < NUM_SPHERES; i++) {
     spheres.push({
         mesh: sphere,
         collider: new THREE.Sphere(new THREE.Vector3(0, - 100, 0), SPHERE_RADIUS),
-        velocity: new THREE.Vector3()
+        velocity: new THREE.Vector3(),
+        isOnGround: false // Atributo para saber si está en el suelo
     });
 
 }
@@ -149,6 +150,11 @@ function throwBall() {
     camera.getWorldDirection(playerDirection);
 
     sphere.collider.center.copy(playerCollider.end).addScaledVector(playerDirection, playerCollider.radius * 1.5);
+    sphere.isOnGround = false;
+    
+    if (!scene.children.includes(sphere.mesh)) {
+        scene.add(sphere.mesh)
+    } 
 
     // throw the ball with more force if we hold the button longer, and if we move forward
 
@@ -285,23 +291,28 @@ function spheresCollisions() {
 
 // Verifica si alguna esfera golpea a algún enemigo
 function enemyCoalition() {
-    for (let i = 0; i < spheres.length; i++) {
+    for (let i = spheres.length - 1; i >= 0; i--) {
         const esfera = spheres[i];
+
+        // Si la esfera está en el piso, ignorarla
+        if (esfera.isOnGround) continue;
 
         for (let j = 0; j < enemigos.length; j++) {
             const enemigo = enemigos[j];
 
             const d2 = esfera.collider.center.distanceToSquared(enemigo.collider.center);
-            const r = 1
+            const r = 1.5;
             const r2 = r * r;
 
             if (d2 < r2) {
-                console.log(`¡La esfera ${i} golpeó al enemigo ${j}!`);
                 enemigo.dead = true;
+                scene.remove(esfera.mesh);
+                break; // Salir del loop de enemigos, ya que la esfera fue eliminada
             }
         }
     }
 }
+
 
 function updateSpheres(deltaTime) {
 
@@ -313,8 +324,21 @@ function updateSpheres(deltaTime) {
 
         if (result) {
 
-            sphere.velocity.addScaledVector(result.normal, - result.normal.dot(sphere.velocity) * 1.5);
+            // Detenemos la velocidad completamente en las direcciones x y z
+            sphere.velocity.x = 0;
+            sphere.velocity.z = 0;
+
+            // Solo mantenemos la componente y de la velocidad para que pueda caer hacia el suelo
+            // Movemos la esfera fuera de la colisión
             sphere.collider.center.add(result.normal.multiplyScalar(result.depth));
+
+            // Si la colisión es en la pared, comenzamos a aplicar la gravedad
+            // De lo contrario, la velocidad y se ajusta con la gravedad
+            if (result.normal.y < 0.5) {
+                sphere.velocity.y = -Math.abs(sphere.velocity.y); // Empieza a caer hacia el suelo
+
+                sphere.isOnGround = true // Atributo para saber si está en el suelo
+            }
 
         } else {
 
@@ -543,7 +567,7 @@ function nuevaPosicion(enemy) {
     const z = minMap.z + Math.random() * sizeMap.z;
 
     // Establecemos la posición en las coordenadas calculadas
-    enemy.position.set(0, 0.1, 0);
+    enemy.position.set(x, 0.1, z);
 }
 
 function animate() {
