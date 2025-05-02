@@ -92,6 +92,8 @@ const vector1 = new THREE.Vector3();
 const vector2 = new THREE.Vector3();
 const vector3 = new THREE.Vector3();
 
+let minMap, sizeMap;
+
 document.addEventListener('keydown', (event) => {
 
     keyStates[event.code] = true;
@@ -207,7 +209,7 @@ function updatePlayer(deltaTime) {
 
     camera.position.copy(playerCollider.end);
 
-    directionalLight.position.copy(playerCollider.end).add(new THREE.Vector3(25, 25, 25));
+    directionalLight.position.copy(playerCollider.end).add(new THREE.Vector3(25, 100, 25));
     directionalLight.target.position.copy(playerCollider.end);
     directionalLight.target.updateMatrixWorld();
 }
@@ -295,11 +297,7 @@ function enemyCoalition() {
 
             if (d2 < r2) {
                 console.log(`¡La esfera ${i} golpeó al enemigo ${j}!`);
-
-                // Aquí puedes eliminar el enemigo o realizar alguna acción
-                scene.remove(enemigo.mesh);
-                enemigos.splice(j, 1);
-                j--; // Corrige índice por eliminación
+                enemigo.dead = true;
             }
         }
     }
@@ -436,6 +434,9 @@ loader.load('mapa_op.glb', (gltf) => {
     box.getSize(size);
     const min = box.min;
 
+    minMap = min;
+    sizeMap = size;
+
     // Aquí ya está cargado el mapa. Ahora carga el modelo de enemigo.
     loaderEne.load(modeloRuta, (gltfEnemy) => {
         modeloBase = gltfEnemy.scene;
@@ -462,6 +463,7 @@ function colocarEnemigos(min, size, cantidad) {
                     node.geometry = node.geometry.clone();
                     node.castShadow = true;
                     node.receiveShadow = true;
+
                 }
             });
 
@@ -479,7 +481,7 @@ function colocarEnemigos(min, size, cantidad) {
             const actions = {
                 Walk: mixer.clipAction(THREE.AnimationClip.findByName(modeloAnimations, 'WALK')),
                 Attack: mixer.clipAction(THREE.AnimationClip.findByName(modeloAnimations, 'ATTACK')),
-                Dying: mixer.clipAction(THREE.AnimationClip.findByName(modeloAnimations, 'DYING'))
+                Dying: mixer.clipAction(THREE.AnimationClip.findByName(modeloAnimations, 'DYNING'))
             };
 
             // Reproducir animación por defecto (WALK)
@@ -494,6 +496,9 @@ function colocarEnemigos(min, size, cantidad) {
 
             // También puedes guardar las acciones si más adelante cambias de estado
             clon.userData = { actions };
+
+            // Agregar atributo personalizado 'dead' para controlar el estado del enemigo
+            clon.dead = false;
 
             // Añadimos el clon a la escena
             scene.add(clon);
@@ -528,6 +533,19 @@ function teleportPlayerIfOob() {
 
 }
 
+function isAnimating(acciones) {
+    return Object.values(acciones).every(action => !action.isRunning());
+}
+
+function nuevaPosicion(enemy) {
+    // Generamos las posiciones aleatorias
+    const x = minMap.x + Math.random() * sizeMap.x;
+    const z = minMap.z + Math.random() * sizeMap.z;
+
+    // Establecemos la posición en las coordenadas calculadas
+    enemy.position.set(0, 0.1, 0);
+}
+
 function animate() {
     const deltaTime = Math.min(0.05, clock.getDelta()) / STEPS_PER_FRAME;
 
@@ -555,8 +573,43 @@ function animate() {
         const direccion = new THREE.Vector3();
         direccion.subVectors(playerCollider.end, enemigo.mesh.position);  // Direccion hacia el jugador
         const distancia = direccion.length();
+        const acciones = enemigo.mesh.userData.actions;
 
-        if (distancia > 1) {
+        if (enemigo.dead) {
+            const clipDuracion = acciones.Dying.getClip().duration;
+            const timeScale = acciones.Dying.timeScale || 1;
+            const tiempoActual = acciones.Dying.time;
+
+            if (acciones && !acciones.Dying.isRunning() && !isAnimating(acciones)) {
+
+                if (acciones.Walk.isRunning()) {
+                    acciones.Walk.stop();
+                } else {
+                    acciones.Attack.stop();
+                }
+
+                acciones.Dying.reset();
+                acciones.Dying.setLoop(THREE.LoopOnce, 1);   // Solo una vez
+                acciones.Dying.clampWhenFinished = true;     // Se detiene en el último frame
+                acciones.Dying.timeScale = 20;
+                acciones.Dying.play();
+
+            }
+
+            if (tiempoActual >= clipDuracion) {
+                acciones.Dying.reset();
+                acciones.Dying.play();
+                acciones.Dying.stop();
+
+                nuevaPosicion(enemigo.mesh)
+
+                enemigo.dead = false
+            }
+
+            return;
+        }
+
+        if (distancia > 2 && !enemigo.dead) {
             direccion.normalize();  // Normalizamos la dirección para no movernos más rápido en diagonal
 
             // Actualizar la posición del enemigo
@@ -572,6 +625,24 @@ function animate() {
             // Calcular la rotación del enemigo hacia el jugador
             const angulo = Math.atan2(direccion.x, direccion.z);  // Calculamos el ángulo en radianes
             enemigo.mesh.rotation.y = angulo;  // Aplicamos la rotación en el eje Y
+
+            if (acciones && (acciones.Attack.isRunning() || isAnimating(acciones))) {
+                acciones.Attack.stop();        // Detén WALK si está activa
+                acciones.Walk.reset();
+                acciones.Walk.setLoop(THREE.LoopRepeat, Infinity);  // Repetir indefinidamente
+                acciones.Walk.timeScale = 20;
+                acciones.Walk.play();
+            }
+
+        } else {
+
+            if (acciones && acciones.Walk.isRunning()) {
+                acciones.Walk.stop();
+                acciones.Attack.reset();
+                acciones.Attack.setLoop(THREE.LoopRepeat, Infinity);  // Repetir indefinidamente
+                acciones.Attack.timeScale = 18;
+                acciones.Attack.play();
+            }
         }
     });
 
