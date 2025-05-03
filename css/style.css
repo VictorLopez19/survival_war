@@ -22,6 +22,32 @@ body {
     z-index: 0 !important;
 }
 
+
+#three-container::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 200 !important;
+
+    background: radial-gradient(
+        ellipse at center,
+        rgba(255, 0, 0, 0) 40%,
+        rgba(255, 0, 0, 0.4) 70%,
+        rgba(147, 0, 0, 0.8) 90%,
+        rgb(144, 0, 0) 100%
+    );
+
+    opacity: 0; /* Inicialmente no visible */
+    transition: opacity 1s ease-in-out; /* Para transición suave */
+}
+
+#three-container.show-border::before {
+    opacity: 1; /* Se vuelve visible cuando se agrega esta clase */
+}
+
 #three-container div {
     width: 100%;
     height: 100%;

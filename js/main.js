@@ -226,11 +226,11 @@ function onWindowResize() {
 
 function throwBall() {
 
-    if (vida <= 0  || perdio) {
+    if (vida <= 0 || perdio) {
         return;
     }
 
-    if (noBalas <= 0){
+    if (noBalas <= 0) {
         return;
     }
 
@@ -277,7 +277,7 @@ function throwBall() {
 
     sphereIdx = (sphereIdx + 1) % spheres.length;
 
-    noBalas --;
+    noBalas--;
 }
 
 function playerCollisions() {
@@ -630,7 +630,7 @@ function colocarEnemigos(min, size, cantidad) {
                 audio.setBuffer(buffer);
                 audio.setRefDistance(0);
                 audio.setLoop(true);
-                audio.setVolume(2); 
+                audio.setVolume(2);
 
                 audio.setMaxDistance(20);      // más allá de esto, apenas se escucha
                 audio.setDistanceModel('linear'); // puedes usar 'inverse' o 'exponential' también
@@ -785,7 +785,7 @@ function animate() {
     const delta = clock.getDelta();
     const deltaTime = Math.min(0.05, delta) / STEPS_PER_FRAME;
 
-    if (vida <= 0  || perdio) {
+    if (vida <= 0 || perdio) {
         renderer.setAnimationLoop(null);
         txtGameOver();
 
@@ -906,6 +906,7 @@ function animate() {
                 acciones.Walk.setLoop(THREE.LoopRepeat, Infinity);  // Repetir indefinidamente
                 acciones.Walk.timeScale = 2;
                 acciones.Walk.play();
+                document.getElementById('three-container').classList.remove('show-border');
             }
 
         } else {
@@ -924,6 +925,8 @@ function animate() {
                 acciones.Attack.clampWhenFinished = true;     // Se detiene en el último frame
                 acciones.Attack.timeScale = 2;
                 acciones.Attack.play();
+
+                document.getElementById('three-container').classList.add('show-border');
             }
 
             if (tiempoActual >= clipDuracion) {
@@ -951,7 +954,7 @@ function incrementaNivel() {
     //Cada nivel aumenta dos enemigos más para matar
     console.log('Validando')
 
-    if (noEnemigosNivel > puntajeNivel){
+    if (noEnemigosNivel > puntajeNivel) {
         perdio = true;
     }
 
@@ -967,7 +970,7 @@ const intervalId = setInterval(incrementaNivel, 60000);
 function incrementaBalas() {
     //Cada nivel aumenta dos enemigos más para matar
     if (noBalas < 15)
-        noBalas ++;
+        noBalas++;
 
     console.log(noBalas)
 }
