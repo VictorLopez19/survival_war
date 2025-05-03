@@ -59,23 +59,42 @@ const spheres = [];
 const enemigos = [];
 const mixers = [];
 let sphereIdx = 0;
+const loaderBala = new GLTFLoader();
 
-for (let i = 0; i < NUM_SPHERES; i++) {
+// Cargar el modelo .glb de la bala
+loaderBala.load('./models/gltf/bala.glb', function (gltf) {
+    // Al cargar el modelo .glb, lo usamos para crear las balas
+    for (let i = 0; i < NUM_SPHERES; i++) {
+        // Crear una copia del modelo cargado
+        const bullet = SkeletonUtils.clone(gltf.scene) // Clonamos el modelo
 
-    const sphere = new THREE.Mesh(sphereGeometry, sphereMaterial);
-    sphere.castShadow = true;
-    sphere.receiveShadow = true;
+        bullet.scale.set(0.15, 0.15, 0.15);
 
-    scene.add(sphere);
+        bullet.traverse((node) => {
+            if (node.isMesh) {
+                node.material = node.material.clone();
+                node.geometry = node.geometry.clone();
+                node.castShadow = true;
+                node.receiveShadow = true;
+            }
+        });
 
-    spheres.push({
-        mesh: sphere,
-        collider: new THREE.Sphere(new THREE.Vector3(0, - 100, 0), SPHERE_RADIUS),
-        velocity: new THREE.Vector3(),
-        isOnGround: false // Atributo para saber si está en el suelo
-    });
+        // Añadir la bala a la escena
+        scene.add(bullet);
 
-}
+        // Agregar la bala al array de esferas (spheres)
+        spheres.push({
+            mesh: bullet,
+            collider: new THREE.Sphere(new THREE.Vector3(0, -100, 0), SPHERE_RADIUS), // Usamos un collider esférico para la bala
+            velocity: new THREE.Vector3(), // Velocidad inicial de la bala
+            isOnGround: false // Atributo para saber si está en el suelo
+        });
+
+        console.log('Agregadas')
+    }
+}, undefined, function (error) {
+    console.error(error); // Si hay algún error al cargar el modelo
+});
 
 const worldOctree = new Octree();
 
@@ -148,6 +167,9 @@ function throwBall() {
     const sphere = spheres[sphereIdx];
 
     camera.getWorldDirection(playerDirection);
+    //playerDirection.normalize(); 
+
+    console.log(playerDirection)
 
     sphere.collider.center.copy(playerCollider.end).addScaledVector(playerDirection, playerCollider.radius * 1.5);
     sphere.isOnGround = false;
@@ -156,15 +178,23 @@ function throwBall() {
         scene.add(sphere.mesh)
     }
 
-    // throw the ball with more force if we hold the button longer, and if we move forward
+    // Obtener posición objetivo en la dirección del jugador
+    const target = new THREE.Vector3().copy(sphere.mesh.position).add(playerDirection);
+    // Hacer que la malla mire hacia la dirección del jugador
+    sphere.mesh.quaternion.setFromRotationMatrix(
+        new THREE.Matrix4().lookAt(sphere.mesh.position, target, new THREE.Vector3(0, -1, 0))
+    );
 
+    // Ajustar rotación inicial del modelo si apunta en otra dirección originalmente
+    sphere.mesh.rotateX(-Math.PI / 2);  // Por ejemplo, si tu modelo apunta en el eje Y
+
+    // throw the ball with more force if we hold the button longer, and if we move forward
     const impulse = 25 + 30 * (1 - Math.exp((mouseTime - performance.now()) * 0.001));
 
     sphere.velocity.copy(playerDirection).multiplyScalar(impulse);
     sphere.velocity.addScaledVector(playerVelocity, 2);
 
     sphereIdx = (sphereIdx + 1) % spheres.length;
-
 }
 
 function playerCollisions() {
@@ -319,28 +349,28 @@ function enemyCoalition() {
 
 
 function enemyCollisions(enemigo) {
-        // Tomar los valores del objeto enemigo
-        const x = enemigo.collider.center.x;        // Posición en X
-        const y = enemigo.collider.center.y + 2;    // Posición en Y
-        const z = enemigo.collider.center.z;        // Posición en Z
-    
-        const radio = 0.9;  // Tamaño en radio para la esfera
-    
-        // Crear una esfera con la posición y radio del enemigo
-        const esferaCollider = new THREE.Sphere(new THREE.Vector3(x, y, z), radio);
-    
-        // Usar el método sphereIntersect para verificar si la esfera colisiona con alguna pared
-        const result = worldOctree.sphereIntersect(esferaCollider);
-    
-        if (result) {
-            // Opción para mover al enemigo fuera de la colisión, si es necesario
-            enemigo.collider.center.addScaledVector(result.normal, result.depth);
-    
-            return true;  // Retorna true si se detectó la colisión
-        }
-    
-        // Retorna false si no se detectó colisión
-        return false;
+    // Tomar los valores del objeto enemigo
+    const x = enemigo.collider.center.x;        // Posición en X
+    const y = enemigo.collider.center.y + 2;    // Posición en Y
+    const z = enemigo.collider.center.z;        // Posición en Z
+
+    const radio = 0.9;  // Tamaño en radio para la esfera
+
+    // Crear una esfera con la posición y radio del enemigo
+    const esferaCollider = new THREE.Sphere(new THREE.Vector3(x, y, z), radio);
+
+    // Usar el método sphereIntersect para verificar si la esfera colisiona con alguna pared
+    const result = worldOctree.sphereIntersect(esferaCollider);
+
+    if (result) {
+        // Opción para mover al enemigo fuera de la colisión, si es necesario
+        enemigo.collider.center.addScaledVector(result.normal, result.depth);
+
+        return true;  // Retorna true si se detectó la colisión
+    }
+
+    // Retorna false si no se detectó colisión
+    return false;
 }
 
 function updateSpheres(deltaTime) {
@@ -615,8 +645,6 @@ function animate() {
         updateSpheres(deltaTime);
 
         teleportPlayerIfOob();
-
-        //console.log(playerCollider);
 
     }
 
