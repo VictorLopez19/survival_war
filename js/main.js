@@ -57,6 +57,7 @@ const sphereMaterial = new THREE.MeshLambertMaterial({ color: 0xdede8d });
 
 const spheres = [];
 const enemigos = [];
+const zombieAudios = [];
 const mixers = [];
 let sphereIdx = 0;
 const loaderBala = new GLTFLoader();
@@ -67,6 +68,12 @@ let armaTargetPosition = new THREE.Vector3();
 // VARIABLES PARA EL JUEGO
 let puntaje = 0;
 let vida = 100;
+
+let puntajeNivel = 0;
+let noEnemigosNivel = 10;
+
+let perdio = false;
+let noBalas = 15;
 
 /* SONIDOS */
 let shoot = new Audio('./assets/sounds/shoot.mp3');
@@ -219,6 +226,14 @@ function onWindowResize() {
 
 function throwBall() {
 
+    if (vida <= 0  || perdio) {
+        return;
+    }
+
+    if (noBalas <= 0){
+        return;
+    }
+
     const sphere = spheres[sphereIdx];
     camera.getWorldDirection(playerDirection);
 
@@ -251,10 +266,18 @@ function throwBall() {
         reproducirMusic();
     }
 
+    zombieAudios.forEach(audio => {
+        if (!audio.isPlaying && audio.buffer) {
+            audio.play();
+        }
+    });
+
     sphere.velocity.copy(playerDirection).multiplyScalar(impulse);
     sphere.velocity.addScaledVector(playerVelocity, 2);
 
     sphereIdx = (sphereIdx + 1) % spheres.length;
+
+    noBalas --;
 }
 
 function playerCollisions() {
@@ -607,10 +630,11 @@ function colocarEnemigos(min, size, cantidad) {
                 audio.setBuffer(buffer);
                 audio.setRefDistance(0);
                 audio.setLoop(true);
+                audio.setVolume(2); 
 
                 audio.setMaxDistance(20);      // más allá de esto, apenas se escucha
                 audio.setDistanceModel('linear'); // puedes usar 'inverse' o 'exponential' también
-                audio.play(); // puedes controlar cuándo empezar
+                zombieAudios.push(audio);
             });
 
             // Clonar materiales y geometrías para evitar referencias compartidas
@@ -761,8 +785,18 @@ function animate() {
     const delta = clock.getDelta();
     const deltaTime = Math.min(0.05, delta) / STEPS_PER_FRAME;
 
-    if (vida <= 0){
+    if (vida <= 0  || perdio) {
         renderer.setAnimationLoop(null);
+        txtGameOver();
+
+        zombieAudios.forEach(audio => {
+            if (audio.isPlaying && audio.buffer) {
+                audio.pause();
+            }
+        });
+
+        clearInterval(intervalId);
+        clearInterval(intervaBalaslId);
     }
 
     // we look for collisions in substeps to mitigate the risk of
@@ -781,7 +815,7 @@ function animate() {
         const camDir = new THREE.Vector3();
         camera.getWorldDirection(camDir); // obtiene la dirección hacia la que mira la cámara
         const miraPos = new THREE.Vector3().copy(camera.position).add(camDir.multiplyScalar(10));
-        miraPos.y -= 0.7; 
+        miraPos.y -= 0.7;
         mira.position.copy(miraPos);
         mira.rotation.copy(camera.rotation);
     }
@@ -832,9 +866,8 @@ function animate() {
                 acciones.Dying.play();
 
                 puntaje++;
+                puntajeNivel++;
                 //console.log(puntaje)
-
-                zombi_attack.pause();
             }
 
             if (tiempoActual >= clipDuracion) {
@@ -891,10 +924,6 @@ function animate() {
                 acciones.Attack.clampWhenFinished = true;     // Se detiene en el último frame
                 acciones.Attack.timeScale = 2;
                 acciones.Attack.play();
-
-                /*zombi_walk.currentTime = 0;
-                zombi_walk.loop = true; // Hace que el sonido se repita
-                zombi_walk.play();*/
             }
 
             if (tiempoActual >= clipDuracion) {
@@ -918,9 +947,43 @@ function animate() {
 }
 
 // Función que se ejecuta cada minuto
-function verificarCadaMinuto() {
-    // Aquí va la lógica que quieres verificar cada minuto
-    console.log("Verificando algo...");
+function incrementaNivel() {
+    //Cada nivel aumenta dos enemigos más para matar
+    console.log('Validando')
+
+    if (noEnemigosNivel > puntajeNivel){
+        perdio = true;
+    }
+
+    console.log(puntajeNivel)
+    noEnemigosNivel += 2;
+    puntajeNivel = 0;
+
+    console.log(noEnemigosNivel)
 }
 
-const intervalId = setInterval(verificarCadaMinuto, 60000);
+const intervalId = setInterval(incrementaNivel, 60000);
+
+function incrementaBalas() {
+    //Cada nivel aumenta dos enemigos más para matar
+    if (noBalas < 15)
+        noBalas ++;
+
+    console.log(noBalas)
+}
+
+const intervaBalaslId = setInterval(incrementaBalas, 1500);
+
+function txtGameOver() {
+    // Crear el contenedor principal
+    const loadingMessage = document.createElement('div');
+    loadingMessage.id = 'loadingMessage';
+
+    // Crear y agregar el título
+    const title = document.createElement('h1');
+    title.classList.add('game-title');
+    title.textContent = 'Game Over';
+    loadingMessage.appendChild(title);
+
+    document.getElementById('three-container').appendChild(loadingMessage);
+}
