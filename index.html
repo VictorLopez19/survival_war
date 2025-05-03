@@ -2,7 +2,7 @@
 <html lang="es">
 
 <head>
-	<title>Física e interacción 3D</title>
+	<title>Survival War</title>
 	<meta charset="utf-8">
 	<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
 
@@ -10,20 +10,26 @@
 	<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet"
 		integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
 
+	<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+	<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="./css/style.css">
+
 	<!-- Font Awesome para los iconos -->
 	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 
 	<link type="text/css" rel="stylesheet" href="./css/main.css">
+	<link rel="shortcut icon" href="./assets/img/icon.png" type="image/x-icon">
 	<link rel="stylesheet" href="./css/style.css">
 </head>
 
 <body class="d-flex flex-column" style="height: 100vh; margin: 0;">
 
 	<!-- Barra de navegación -->
-	<nav class="navbar navbar-dark bg-dark navbar-expand-lg py-2">
+	<nav class="navbar navbar-dark bg-dark navbar-expand-lg py-3">
 		<div class="container-fluid">
 			<a class="navbar-brand text-white ms-2" href="#">
-				Física e interacción 3D
+				<img src="./assets/img/icon.png" width="30" height="30" class="d-inline-block align-top" alt="">
+				Survival War
 			</a>
 
 			<!-- Botón de colapso para pantallas pequeñas -->
@@ -32,18 +38,104 @@
 				<span class="navbar-toggler-icon"></span>
 			</button>
 
+			<!-- Contenedor de elementos del menú -->
+			<div class="collapse navbar-collapse" id="navbarContent">
+				<div class="ms-auto d-flex flex-column flex-lg-row align-items-lg-center">
+					<!-- Botón Información -->
+					<button class="btn btn-info mt-3 mt-lg-0 mb-2 mb-lg-0 me-lg-3 botones" data-bs-toggle="modal"
+						data-bs-target="#modalInfo">
+						<i class="fas fa-info-circle me-2"></i> Información
+					</button>
+
+					<!-- Botón Puntajes más altos -->
+					<button class="btn btn-warning botones" data-bs-toggle="modal" data-bs-target="#modalPuntajes">
+						<i class="fas fa-trophy me-2"></i> Puntajes más altos
+					</button>
+				</div>
+			</div>
 		</div>
 	</nav>
 
-	<!-- Contenedor de Three.js que ocupará el espacio restante -->
-	<div id="three-container">
-		
+	<!-- Modal Información -->
+	<div class="modal fade" id="modalInfo" tabindex="-1" aria-labelledby="modalInfoLabel" aria-hidden="true">
+		<div class="modal-dialog">
+			<div class="modal-content">
+				<div class="modal-header">
+					<h5 class="modal-title" id="modalInfoLabel">Información</h5>
+					<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+				</div>
+				<div class="modal-body" id="informacion">
+					<p>El objetivo del juego es evitar que BOO te toque. Para hacerlo, tienes caparazones azules que te
+						ayudarán, pero no son infinitos, así que úsalos con cuidado. También puedes usar las plataformas
+						para alejarte de BOO y ponerte a salvo.</p>
+
+					<h6>Controles:</h6>
+					<ul>
+						<li class="mb-1"><strong>Movimiento:</strong> Hay dos formas de moverse en el juego. La primera
+							es usando el
+							teclado, con las teclas
+							<span class="badge rounded-pill bg-dark">A</span> ,
+							<span class="badge rounded-pill bg-dark">D</span> y
+							<span class="badge rounded-pill bg-dark">W</span>
+							para moverte hacia la izquierda, derecha y arriba, respectivamente. La segunda opción es a
+							través de botones, ideal para dispositivos sin teclado.
+						</li>
+						<li><strong>Disparo:</strong> Para poder derrotar a BOO, debes apuntar hacia la dirección en la
+							que se encuentra
+							y hacer clic. Así lanzarás un caparazón que lo afectará.
+						</li>
+					</ul>
+
+					<h6>Reglas:</h6>
+					<ul>
+						<li>Tienes un total de 3 vidas, ¡así que protégelas bien!</li>
+						<li>Los caparazones no son infinitos, pero cada
+							<span class="badge rounded-pill bg-dark">1.5 segundos</span>
+							recibirás uno nuevo, ¡úsalos
+							sabiamente!
+						</li>
+						<li>Solo puedes tener hasta 10 caparazones a la vez, no se acumulan más de esa cantidad.</li>
+						<li>BOO puede atravesar las plataformas, pero no te preocupes, los caparazones están diseñados
+							para hacer lo mismo y detenerlo.</li>
+						<li>Cuanto más rápido elimines a BOO, más alto será tu nivel.</li>
+						<li>Para comenzar a jugar, simplemente haz clic en el botón ubicado en la esquina superior
+							derecha de la pantalla. Además, podrás pausarlo en cualquier momento durante el juego.</li>
+					</ul>
+
+					<h6>Sugerencias:</h6>
+					<ul>
+						<li>Para una mejor experiencia, te recomendamos jugar en una laptop o PC.</li>
+						<li>Intenta eliminar la mayor cantidad de enemigos posible, ya que los resultados se registran.
+							¡No querrás quedar fuera del top, verdad?</li>
+					</ul>
+				</div>
+			</div>
+		</div>
 	</div>
 
-	<!-- Contenedor de carga con spinner y mensaje -->
-    <div id="loadingMessage" class="">
-        <div class="spinner"></div>
-        <p>Cargando el modelo...</p>
+	<!-- Modal Puntajes Más Altos -->
+	<div class="modal fade" id="modalPuntajes" tabindex="-1" aria-labelledby="modalPuntajesLabel" aria-hidden="true">
+		<div class="modal-dialog">
+			<div class="modal-content">
+				<div class="modal-header">
+					<h5 class="modal-title" id="modalPuntajesLabel">Puntajes más altos</h5>
+					<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+				</div>
+				<div class="modal-body" id="modalPuntajesBody">
+					<!-- Los puntajes serán insertados aquí -->
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<!-- Contenedor de Three.js que ocupará el espacio restante -->
+	<div id="three-container">
+		<!-- Contenedor de carga con spinner y mensaje -->
+		<div id="loadingMessage">
+			<h1 class="game-title">Survival War</h1>
+			<div class="spinner"></div>
+			<p>Cargando ...</p>
+		</div>
 	</div>
 
 	<!-- Footer -->

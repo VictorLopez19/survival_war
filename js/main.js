@@ -77,7 +77,7 @@ let music = new Audio('./assets/sounds/music.mp3');
 
 
 function reproducirMusic() {
-    music.volume = 0.6; // Ajusta el volumen antes de reproducirlo
+    music.volume = 0.3; // Ajusta el volumen antes de reproducirlo
 
     music.loop = true; // Hace que el sonido se repita
     music.play();
@@ -605,7 +605,7 @@ function colocarEnemigos(min, size, cantidad) {
             const audio = new THREE.PositionalAudio(listener);
             audioLoader.load('./assets/sounds/Zombie.mp3', (buffer) => {
                 audio.setBuffer(buffer);
-                audio.setRefDistance(5);
+                audio.setRefDistance(0);
                 audio.setLoop(true);
 
                 audio.setMaxDistance(20);      // más allá de esto, apenas se escucha
