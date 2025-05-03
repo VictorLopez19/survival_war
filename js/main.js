@@ -1,10 +1,10 @@
 import * as THREE from 'three';
 
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
-import { DRACOLoader } from 'three/addons/loaders/DRACOLoader.js';
 import { Octree } from 'three/addons/math/Octree.js';
 import { Capsule } from 'three/addons/math/Capsule.js';
 import * as SkeletonUtils from 'three/addons/utils/SkeletonUtils.js';
+import { AudioListener, AudioLoader, PositionalAudio } from 'https://cdn.jsdelivr.net/npm/three@0.161.0/build/three.module.js';
 
 const clock = new THREE.Clock();
 
@@ -70,6 +70,22 @@ let vida = 100;
 
 /* SONIDOS */
 let shoot = new Audio('./assets/sounds/shoot.mp3');
+let zombi_walk = new Audio('./assets/sounds/zombi_walk.mp3');
+let zombi_attack = new Audio('./assets/sounds/zombi_attack.mp3');
+let music = new Audio('./assets/sounds/music.mp3');
+
+
+
+function reproducirMusic() {
+    music.volume = 0.6; // Ajusta el volumen antes de reproducirlo
+
+    music.loop = true; // Hace que el sonido se repita
+    music.play();
+}
+
+function estaReproduciendo(audio) {
+    return !audio.paused && !audio.ended && audio.currentTime > 0;
+}
 
 // Cargar el modelo .glb de la bala
 loaderBala.load('./models/gltf/bala.glb', function (gltf) {
@@ -225,10 +241,15 @@ function throwBall() {
     sphere.mesh.rotateY(-Math.PI / 2);  // Por ejemplo, si tu modelo apunta en el eje Y
 
     // throw the ball with more force if we hold the button longer, and if we move forward
-    const impulse = 40 + 30 * (1 - Math.exp((mouseTime - performance.now()) * 0.001));
+    const impulse = 50 + 30 * (1 - Math.exp((mouseTime - performance.now()) * 0.001));
 
     shoot.currentTime = 0;  // Reinicia el sonido si no se está reproduciendo
+    shoot.volume = 0.2;
     shoot.play();
+
+    if (!estaReproduciendo(music)) {
+        reproducirMusic();
+    }
 
     sphere.velocity.copy(playerDirection).multiplyScalar(impulse);
     sphere.velocity.addScaledVector(playerVelocity, 2);
@@ -531,6 +552,10 @@ const modeloRuta = './models/gltf/Zombi.glb';
 let modeloBase = null;
 let modeloAnimations = [];
 
+const listener = new THREE.AudioListener();
+camera.add(listener);
+const audioLoader = new THREE.AudioLoader();
+
 // Cargar mapa
 loader.load('mapa_op.glb', (gltf) => {
     document.getElementById('loadingMessage').classList.add('hidden');
@@ -563,7 +588,6 @@ loader.load('mapa_op.glb', (gltf) => {
     loaderEne.load(modeloRuta, (gltfEnemy) => {
         modeloBase = gltfEnemy.scene;
         modeloAnimations = gltfEnemy.animations;
-
         // Ya se puede colocar porque el mapa existe
         colocarEnemigos(min, size, 70);
 
@@ -578,6 +602,17 @@ function colocarEnemigos(min, size, cantidad) {
             // Clonamos el modelo base con un clon profundo para asegurar que materiales y geometrías se copien correctamente
             const clon = SkeletonUtils.clone(modeloBase);
 
+            const audio = new THREE.PositionalAudio(listener);
+            audioLoader.load('./assets/sounds/Zombie.mp3', (buffer) => {
+                audio.setBuffer(buffer);
+                audio.setRefDistance(5);
+                audio.setLoop(true);
+
+                audio.setMaxDistance(20);      // más allá de esto, apenas se escucha
+                audio.setDistanceModel('linear'); // puedes usar 'inverse' o 'exponential' también
+                audio.play(); // puedes controlar cuándo empezar
+            });
+
             // Clonar materiales y geometrías para evitar referencias compartidas
             clon.traverse((node) => {
                 if (node.isMesh) {
@@ -585,6 +620,7 @@ function colocarEnemigos(min, size, cantidad) {
                     node.geometry = node.geometry.clone();
                     node.castShadow = true;
                     node.receiveShadow = true;
+                    node.add(audio)
 
                     if (node.material.isMeshStandardMaterial || node.material.isMeshPhysicalMaterial) {
                         // Mantiene el color original
@@ -655,9 +691,9 @@ function teleportPlayerIfOob() {
 
     if (camera.position.y <= - 25) {
 
-        playerCollider.start.set(0, 0.35, 0);
+        playerCollider.start.set(0, 0.5, 0);
         playerCollider.end.set(0, 1, 0);
-        playerCollider.radius = 0.35;
+        playerCollider.radius = 0.5;
         camera.position.copy(playerCollider.end);
         camera.rotation.set(0, 0, 0);
 
@@ -771,6 +807,8 @@ function animate() {
 
                 puntaje++;
                 //console.log(puntaje)
+
+                zombi_attack.pause();
             }
 
             if (tiempoActual >= clipDuracion) {
@@ -827,6 +865,10 @@ function animate() {
                 acciones.Attack.clampWhenFinished = true;     // Se detiene en el último frame
                 acciones.Attack.timeScale = 2;
                 acciones.Attack.play();
+
+                /*zombi_walk.currentTime = 0;
+                zombi_walk.loop = true; // Hace que el sonido se repita
+                zombi_walk.play();*/
             }
 
             if (tiempoActual >= clipDuracion) {
