@@ -19,7 +19,7 @@ const fillLight1 = new THREE.HemisphereLight(0x8dc1de, 0x00668d, 1.5);
 fillLight1.position.set(2, 1, 1);
 scene.add(fillLight1);
 
-const directionalLight = new THREE.DirectionalLight(0xffffff, 2.5);
+const directionalLight = new THREE.DirectionalLight(0x93ffff, 2.5);
 directionalLight.position.set(25, 25, 25);
 directionalLight.castShadow = true;
 directionalLight.shadow.camera.near = 0.01;
@@ -47,8 +47,8 @@ container.appendChild(renderer.domElement);
 
 const GRAVITY = 30;
 
-const NUM_SPHERES = 10;
-const SPHERE_RADIUS = 0.1;
+const NUM_SPHERES = 30;
+const SPHERE_RADIUS = 0.5;
 
 const STEPS_PER_FRAME = 5;
 
@@ -60,6 +60,13 @@ const enemigos = [];
 const mixers = [];
 let sphereIdx = 0;
 const loaderBala = new GLTFLoader();
+const loaderArma = new GLTFLoader();
+let armaModel;
+let armaTargetPosition = new THREE.Vector3();
+
+// VARIABLES PARA EL JUEGO
+let puntaje = 0;
+let vida = 100;
 
 // Cargar el modelo .glb de la bala
 loaderBala.load('./models/gltf/bala.glb', function (gltf) {
@@ -68,7 +75,7 @@ loaderBala.load('./models/gltf/bala.glb', function (gltf) {
         // Crear una copia del modelo cargado
         const bullet = SkeletonUtils.clone(gltf.scene) // Clonamos el modelo
 
-        bullet.scale.set(0.15, 0.15, 0.15);
+        bullet.scale.set(4, 4, 4);
 
         bullet.traverse((node) => {
             if (node.isMesh) {
@@ -76,6 +83,17 @@ loaderBala.load('./models/gltf/bala.glb', function (gltf) {
                 node.geometry = node.geometry.clone();
                 node.castShadow = true;
                 node.receiveShadow = true;
+
+                if (node.material.isMeshStandardMaterial || node.material.isMeshPhysicalMaterial) {
+                    // Mantiene el color original
+                    node.material.emissiveIntensity = 0.3; // más brillo sin cambiar color
+
+                    node.material.roughness = 0.5; // más liso
+                    node.material.metalness = 0.3; // más metálico
+
+                    const baseColor = node.material.color.clone();
+                    node.material.emissive = baseColor.multiplyScalar(0.1); // una pequeña emisión del color original
+                }
             }
         });
 
@@ -89,12 +107,30 @@ loaderBala.load('./models/gltf/bala.glb', function (gltf) {
             velocity: new THREE.Vector3(), // Velocidad inicial de la bala
             isOnGround: false // Atributo para saber si está en el suelo
         });
-
-        console.log('Agregadas')
     }
 }, undefined, function (error) {
     console.error(error); // Si hay algún error al cargar el modelo
 });
+
+// Cargar el modelo .glb del arma
+loaderArma.load('./models/gltf/arma.glb', function (gltf) {
+    armaModel = gltf.scene;
+    armaModel.scale.set(0.6, 0.6, 0.6); // Ajusta según tamaño real del modelo
+
+    // Posición inicial (parte inferior derecha de la vista de la cámara)
+    const offsetInicial = new THREE.Vector3(0.4, -0.3, -0.7); // Derecha, abajo, hacia adelante
+    const initialPosition = camera.position.clone().add(offsetInicial.applyQuaternion(camera.quaternion));
+    armaModel.position.copy(initialPosition);
+
+    // Posición destino (centro de pantalla, justo al frente)
+    const offsetCentro = new THREE.Vector3(0, -0.1, -0.5);
+    armaTargetPosition.copy(camera.position.clone().add(offsetCentro.applyQuaternion(camera.quaternion)));
+
+    scene.add(armaModel);
+}, undefined, function (error) {
+    console.error(error);
+});
+
 
 const worldOctree = new Octree();
 
@@ -165,11 +201,7 @@ function onWindowResize() {
 function throwBall() {
 
     const sphere = spheres[sphereIdx];
-
     camera.getWorldDirection(playerDirection);
-    //playerDirection.normalize(); 
-
-    console.log(playerDirection)
 
     sphere.collider.center.copy(playerCollider.end).addScaledVector(playerDirection, playerCollider.radius * 1.5);
     sphere.isOnGround = false;
@@ -180,13 +212,14 @@ function throwBall() {
 
     // Obtener posición objetivo en la dirección del jugador
     const target = new THREE.Vector3().copy(sphere.mesh.position).add(playerDirection);
+
     // Hacer que la malla mire hacia la dirección del jugador
     sphere.mesh.quaternion.setFromRotationMatrix(
         new THREE.Matrix4().lookAt(sphere.mesh.position, target, new THREE.Vector3(0, -1, 0))
     );
 
     // Ajustar rotación inicial del modelo si apunta en otra dirección originalmente
-    sphere.mesh.rotateX(-Math.PI / 2);  // Por ejemplo, si tu modelo apunta en el eje Y
+    sphere.mesh.rotateY(-Math.PI / 2);  // Por ejemplo, si tu modelo apunta en el eje Y
 
     // throw the ball with more force if we hold the button longer, and if we move forward
     const impulse = 25 + 30 * (1 - Math.exp((mouseTime - performance.now()) * 0.001));
@@ -242,6 +275,7 @@ function updatePlayer(deltaTime) {
     playerCollider.translate(deltaPosition);
 
     playerCollisions();
+    posArma();
 
     camera.position.copy(playerCollider.end);
 
@@ -365,7 +399,6 @@ function enemyCollisions(enemigo) {
     if (result) {
         // Opción para mover al enemigo fuera de la colisión, si es necesario
         enemigo.collider.center.addScaledVector(result.normal, result.depth);
-
         return true;  // Retorna true si se detectó la colisión
     }
 
@@ -526,7 +559,7 @@ loader.load('mapa_op.glb', (gltf) => {
         modeloAnimations = gltfEnemy.animations;
 
         // Ya se puede colocar porque el mapa existe
-        colocarEnemigos(min, size, 100);
+        colocarEnemigos(min, size, 70);
 
     });
 
@@ -547,6 +580,16 @@ function colocarEnemigos(min, size, cantidad) {
                     node.castShadow = true;
                     node.receiveShadow = true;
 
+                    if (node.material.isMeshStandardMaterial || node.material.isMeshPhysicalMaterial) {
+                        // Mantiene el color original
+                        node.material.emissiveIntensity = 1; // más brillo sin cambiar color
+
+                        node.material.roughness = 0.8; // más liso
+                        node.material.metalness = 0.5; // más metálico
+
+                        const baseColor = node.material.color.clone();
+                        node.material.emissive = baseColor.multiplyScalar(0.01); // una pequeña emisión del color original
+                    }
                 }
             });
 
@@ -629,6 +672,33 @@ function nuevaPosicion(enemy) {
     enemy.position.set(x, 0.1, z);
 }
 
+// Función que actualiza la posición y orientación del arma
+//const clock1 = new THREE.Clock();
+
+function posArma() {
+    if (!armaModel) return;
+
+    // Base: posición del jugador
+    const basePos = playerCollider.end.clone();
+
+    // Offset relativo a la cámara
+    const offset = new THREE.Vector3(0.2, -0.3, -0.7); // abajo, derecha y al frente
+    const offsetMundial = offset.applyQuaternion(camera.quaternion);
+
+    // Posición final sin interpolación
+    // Espera 1000 milisegundos (1 segundo) antes de actualizar la posición
+    setTimeout(() => {
+        armaModel.position.copy(basePos.add(offsetMundial));
+    }, 0.05); // 1000 milisegundos
+
+    // Rotación = igual a la de la cámara
+    armaModel.quaternion.copy(camera.quaternion);
+
+    // Ajuste diagonal
+    armaModel.rotateX(0.40);
+    armaModel.rotateY(-1.1);
+}
+
 function animate() {
     const delta = clock.getDelta();
     const deltaTime = Math.min(0.05, delta) / STEPS_PER_FRAME;
@@ -681,6 +751,8 @@ function animate() {
                 acciones.Dying.timeScale = 2;
                 acciones.Dying.play();
 
+                puntaje ++;
+                console.log (puntaje)
             }
 
             if (tiempoActual >= clipDuracion) {
@@ -729,6 +801,21 @@ function animate() {
                 acciones.Attack.setLoop(THREE.LoopRepeat, Infinity);  // Repetir indefinidamente
                 acciones.Attack.timeScale = 1;
                 acciones.Attack.play();
+
+                const intervalId = setInterval(() => {
+                    
+                    if (acciones.Attack.isRunning())
+                        vida -= 1;
+                    console.log(vida);
+                
+                    // Si quieres detener el ciclo en algún punto
+                    /*if (vida <= 0) {
+                        clearInterval(intervalId);
+                        console.log("Se detuvo el daño.");
+                    }*/
+                }, 1500); // Cada 1000 milisegundos (1 segundo)
+
+                
             }
         }
     });
