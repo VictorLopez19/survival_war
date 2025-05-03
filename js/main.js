@@ -557,7 +557,7 @@ camera.add(listener);
 const audioLoader = new THREE.AudioLoader();
 
 // Cargar mapa
-loader.load('mapa_op.glb', (gltf) => {
+loader.load('Mapa_op.glb', (gltf) => {
     document.getElementById('loadingMessage').classList.add('hidden');
 
     const mapa = gltf.scene;
@@ -761,6 +761,10 @@ function animate() {
     const delta = clock.getDelta();
     const deltaTime = Math.min(0.05, delta) / STEPS_PER_FRAME;
 
+    if (vida <= 0){
+        renderer.setAnimationLoop(null);
+    }
+
     // we look for collisions in substeps to mitigate the risk of
     // an object traversing another too quickly for detection.
 
@@ -900,8 +904,8 @@ function animate() {
                 acciones.Attack.timeScale = 2;
                 acciones.Attack.play();
 
-                vida--;
-                //console.log(vida)
+                vida -= 5;
+                console.log(vida)
             }
         }
     });
@@ -912,3 +916,11 @@ function animate() {
     renderer.render(scene, camera);
 
 }
+
+// Función que se ejecuta cada minuto
+function verificarCadaMinuto() {
+    // Aquí va la lógica que quieres verificar cada minuto
+    console.log("Verificando algo...");
+}
+
+const intervalId = setInterval(verificarCadaMinuto, 60000);
