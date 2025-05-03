@@ -738,6 +738,18 @@ function animate() {
             nuevaPosicion(enemigo.mesh)
         }
 
+        if (enemigo.dead && isAnimating(acciones)) {
+            //console.log('Bug')
+            acciones.Dying.reset();
+            acciones.Dying.play();
+            acciones.Dying.stop();
+
+            nuevaPosicion(enemigo.mesh)
+
+            enemigo.dead = false
+            return;
+        }
+
         if (enemigo.dead) {
             const clipDuracion = acciones.Dying.getClip().duration;
             //const timeScale = acciones.Dying.timeScale || 1;
@@ -757,8 +769,8 @@ function animate() {
                 acciones.Dying.timeScale = 2;
                 acciones.Dying.play();
 
-                puntaje ++;
-                console.log (puntaje)
+                puntaje++;
+                //console.log(puntaje)
             }
 
             if (tiempoActual >= clipDuracion) {
@@ -801,27 +813,31 @@ function animate() {
 
         } else {
 
-            if (acciones && acciones.Walk.isRunning()) {
-                acciones.Walk.stop();
+            const clipDuracion = acciones.Attack.getClip().duration;
+            const tiempoActual = acciones.Attack.time;
+
+            if (acciones && !acciones.Attack.isRunning() && !isAnimating(acciones)) {
+
+                if (acciones.Walk.isRunning()) {
+                    acciones.Walk.stop();
+                }
+
                 acciones.Attack.reset();
-                acciones.Attack.setLoop(THREE.LoopRepeat, Infinity);  // Repetir indefinidamente
-                acciones.Attack.timeScale = 1;
+                acciones.Attack.setLoop(THREE.LoopOnce, 1);   // Solo una vez
+                acciones.Attack.clampWhenFinished = true;     // Se detiene en el último frame
+                acciones.Attack.timeScale = 2;
+                acciones.Attack.play();
+            }
+
+            if (tiempoActual >= clipDuracion) {
+                acciones.Attack.reset();
+                acciones.Attack.setLoop(THREE.LoopOnce, 1);   // Solo una vez
+                acciones.Attack.clampWhenFinished = true;     // Se detiene en el último frame
+                acciones.Attack.timeScale = 2;
                 acciones.Attack.play();
 
-                const intervalId = setInterval(() => {
-                    
-                    if (acciones.Attack.isRunning())
-                        vida -= 1;
-                    console.log(vida);
-                
-                    // Si quieres detener el ciclo en algún punto
-                    /*if (vida <= 0) {
-                        clearInterval(intervalId);
-                        console.log("Se detuvo el daño.");
-                    }*/
-                }, 1500); // Cada 1000 milisegundos (1 segundo)
-
-                
+                vida--;
+                //console.log(vida)
             }
         }
     });
