@@ -68,6 +68,9 @@ let armaTargetPosition = new THREE.Vector3();
 let puntaje = 0;
 let vida = 100;
 
+/* SONIDOS */
+let shoot = new Audio('./assets/sounds/shoot.mp3');
+
 // Cargar el modelo .glb de la bala
 loaderBala.load('./models/gltf/bala.glb', function (gltf) {
     // Al cargar el modelo .glb, lo usamos para crear las balas
@@ -222,7 +225,10 @@ function throwBall() {
     sphere.mesh.rotateY(-Math.PI / 2);  // Por ejemplo, si tu modelo apunta en el eje Y
 
     // throw the ball with more force if we hold the button longer, and if we move forward
-    const impulse = 25 + 30 * (1 - Math.exp((mouseTime - performance.now()) * 0.001));
+    const impulse = 40 + 30 * (1 - Math.exp((mouseTime - performance.now()) * 0.001));
+
+    shoot.currentTime = 0;  // Reinicia el sonido si no se está reproduciendo
+    shoot.play();
 
     sphere.velocity.copy(playerDirection).multiplyScalar(impulse);
     sphere.velocity.addScaledVector(playerVelocity, 2);
