@@ -741,6 +741,22 @@ function posArma() {
     armaModel.rotateY(-1.1);
 }
 
+function crearCruz() {
+    const material = new THREE.LineBasicMaterial({ color: 0xbd0505 });
+    const size = 0.3;
+
+    const geometry = new THREE.BufferGeometry().setFromPoints([
+        new THREE.Vector3(-size, 0, 0), new THREE.Vector3(size, 0, 0),
+        new THREE.Vector3(0, -size, 0), new THREE.Vector3(0, size, 0),
+    ]);
+
+    const cruz = new THREE.LineSegments(geometry, material);
+    scene.add(cruz);
+    return cruz;
+}
+
+const mira = crearCruz();
+
 function animate() {
     const delta = clock.getDelta();
     const deltaTime = Math.min(0.05, delta) / STEPS_PER_FRAME;
@@ -758,6 +774,12 @@ function animate() {
 
         teleportPlayerIfOob();
 
+        const camDir = new THREE.Vector3();
+        camera.getWorldDirection(camDir); // obtiene la dirección hacia la que mira la cámara
+        const miraPos = new THREE.Vector3().copy(camera.position).add(camDir.multiplyScalar(10));
+        miraPos.y -= 0.7; 
+        mira.position.copy(miraPos);
+        mira.rotation.copy(camera.rotation);
     }
 
     // Actualizar la posición de los enemigos
