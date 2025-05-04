@@ -188,14 +188,6 @@ document.addEventListener('keyup', (event) => {
 
 });
 
-container.addEventListener('mousedown', () => {
-
-    document.body.requestPointerLock();
-
-    mouseTime = performance.now();
-
-});
-
 document.addEventListener('mouseup', () => {
 
     if (document.pointerLockElement !== null) throwBall();
@@ -234,7 +226,7 @@ function throwBall() {
         return;
     }
 
-    if (!isPlay){
+    if (!isPlay) {
         return;
     }
 
@@ -833,8 +825,8 @@ function animate() {
 
         clearInterval(intervalId);
         clearInterval(intervaBalaslId);
-
-        document.getElementById('three-container').classList.remove('show-border');
+        document.exitPointerLock();
+        container.removeEventListener('mousedown', handleMouseDown);
     }
 
     // we look for collisions in substeps to mitigate the risk of
@@ -991,7 +983,7 @@ function animate() {
                 acciones.Attack.timeScale = 2;
                 acciones.Attack.play();
 
-                vida -= 5;
+                vida -= 50;
             }
         }
     });
@@ -1031,6 +1023,10 @@ function incrementaBalas() {
 const intervaBalaslId = setInterval(incrementaBalas, 1500);
 
 function txtGameOver() {
+    // Limpiar el contenido previo del contenedor
+    const threeContainer = document.getElementById('three-container');
+    threeContainer.innerHTML = '';  // Borra todo el contenido actual
+
     // Crear el contenedor principal
     const loadingMessage = document.createElement('div');
     loadingMessage.id = 'loadingMessage';
@@ -1041,11 +1037,14 @@ function txtGameOver() {
     title.textContent = 'Game Over';
     loadingMessage.appendChild(title);
 
-    document.getElementById('three-container').appendChild(loadingMessage);
-    agregarBoton('JUGAR DE NUEVO');
+    // Agregar el mensaje al contenedor
+    threeContainer.appendChild(loadingMessage);
+
+    // Llamar a la función para agregar el botón
+    agregarBoton('JUGAR DE NUEVO', 1);
 }
 
-function agregarBoton(txt = 'JUGAR AHORA') {
+function agregarBoton(txt = 'JUGAR AHORA', opc = 0) {
     // Crear el contenedor <span>
     const span = document.createElement('span');
 
@@ -1062,7 +1061,7 @@ function agregarBoton(txt = 'JUGAR AHORA') {
     // Crear el texto dentro del botón
     const buttonText = document.createElement('span');
     buttonText.classList.add('button__text');
-    buttonText.textContent = 'JUGAR AHORA';
+    buttonText.textContent = txt;
 
     // Agregar el texto al botón
     buttonLink.appendChild(buttonText);
@@ -1080,25 +1079,32 @@ function agregarBoton(txt = 'JUGAR AHORA') {
     // Agregar el evento de clic al botón
     buttonLink.addEventListener('click', function (event) {
         event.preventDefault();  // Prevenir la acción predeterminada del enlace (si es necesario)
-        renderer.setAnimationLoop(animate);
-        isPlay = true;
 
-        if (!estaReproduciendo(music)) {
-            reproducirMusic();
-        }
-    
-        zombieAudios.forEach(audio => {
-            if (!audio.isPlaying && audio.buffer) {
-                audio.play();
+        if (opc == 0) {
+            renderer.setAnimationLoop(animate);
+            isPlay = true;
+
+            if (!estaReproduciendo(music)) {
+                reproducirMusic();
             }
-        });
 
-        document.getElementById('loadingMessage').classList.add('hidden');
+            zombieAudios.forEach(audio => {
+                if (!audio.isPlaying && audio.buffer) {
+                    audio.play();
+                }
+            });
 
-        if (document.pointerLockElement === document.getElementById('three-container')) {
-            console.log("El puntero está bloqueado.");
+            document.getElementById('loadingMessage').classList.add('hidden');
+
+            document.body.requestPointerLock();
+            container.addEventListener('mousedown', handleMouseDown);
         } else {
-            console.log("El puntero no está bloqueado.");
+            location.reload();
         }
     });
+}
+
+function handleMouseDown() {
+    document.body.requestPointerLock();
+    mouseTime = performance.now();
 }

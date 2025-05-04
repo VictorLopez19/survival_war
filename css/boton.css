@@ -255,7 +255,6 @@
     justify-content: center;
     align-items: center;
     z-index: 10000 !important;
-    background-color: red;
 }
 .button:not(:last-child) {
     margin-bottom: 64px;
