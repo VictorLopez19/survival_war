@@ -153,15 +153,18 @@ body {
     pointer-events: none;
 }
 
-#spinner.hidden, #txtSpinner.hidden{
+#spinner.hidden,
+#txtSpinner.hidden {
     opacity: 0;
     width: 0 !important;
     height: 0 !important;
     pointer-events: none;
 }
 
-#spinner, #txtSpinner{
-    transition: opacity 1s ease; /* Transición suave de 0.5 segundos */
+#spinner,
+#txtSpinner {
+    transition: opacity 1s ease;
+    /* Transición suave de 0.5 segundos */
     transition: width 1s ease;
     transition: height 1s ease;
 }
@@ -308,16 +311,105 @@ footer {
     flex-direction: row;
     justify-content: space-between;
     align-items: center;
-    margin: 4px;
 }
 
-.stats div div {
+#indBullets,
+#indVida {
     width: 200px !important;
     height: 7px !important;
-    background-color: #a80000;
+    background-color: #ddd;
+    border: 1px solid #000;
     border-radius: 10px;
+    margin: 10px;
+    box-sizing: border-box;
 }
 
-.stats div:first-child div {
+#progressBarBullets,
+#progressBarVida {
+    height: 100% !important;
+    width: 100% !important;
+    /* Inicialmente vacío */
+    background-color: #a80000;
+    /* Color de la barra de progreso */
+    border-radius: 5px;
+}
+
+#progressBarBullets {
     background-color: #ffc107;
+}
+
+#noBalas,
+#fuerza {
+    font-weight: bold;
+    display: inline-block;
+    margin-right: 10px;
+}
+
+#fuerza,
+#noBalas {
+    white-space: pre;
+    text-align: justify;
+    width: 120px !important;
+    display: flex;
+    flex-direction: column;
+    align-items: end;
+    justify-content: space-between;
+}
+
+#modalAlerta {
+    position: fixed;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: #333;
+    color: white;
+    padding: 16px 24px;
+    border-radius: 0 0 8px 8px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+    z-index: 1000;
+    display: none; /* Inicialmente está oculta */
+    align-items: center;
+    font-family: sans-serif;
+    opacity: 0; /* Inicialmente invisible */
+    transform: translateX(-50%) translateY(-100%); /* Fuera de la pantalla */
+    animation: aparecer 0.4s ease-out;
+    transition: opacity 1s ease, transform 1s ease;
+    gap: 16px;
+}
+
+#modalAlerta.mostrar {
+    display: flex; /* Muestra la alerta */
+    opacity: 1; /* Hace visible la alerta */
+    transform: translateX(-50%) translateY(0); /* Vuelve a su posición */
+}
+
+#modalAlerta .icono {
+    font-size: 24px;
+}
+
+#modalAlerta .contenido {
+    display: flex;
+    flex-direction: column;
+}
+
+#modalAlerta .titulo {
+    font-weight: bold;
+    font-size: 15px;
+    margin-bottom: 4px;
+}
+
+#modalAlerta .descripcion {
+    font-size: 12px;
+    opacity: 0.9;
+}
+
+@keyframes aparecer {
+    from {
+        transform: translateX(-50%) translateY(-100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(-50%) translateY(0);
+        opacity: 1;
+    }
 }

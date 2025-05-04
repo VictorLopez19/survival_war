@@ -264,6 +264,10 @@ function throwBall() {
     sphereIdx = (sphereIdx + 1) % spheres.length;
 
     noBalas--;
+
+    let txt = noBalas.toString().padStart(2, ' ');
+    document.getElementById('noBalas').innerHTML = 'Munición ' + txt + '/15'
+    actualizarBarraMunicion();
 }
 
 function playerCollisions() {
@@ -823,7 +827,6 @@ function animate() {
             enemigo.mesh.audioDead.pause();
         });
 
-        clearInterval(intervalId);
         clearInterval(intervaBalaslId);
         document.exitPointerLock();
         container.removeEventListener('mousedown', handleMouseDown);
@@ -904,6 +907,9 @@ function animate() {
 
                 puntaje++;
                 puntajeNivel++;
+
+                document.getElementById('puntObje').innerHTML = puntajeNivel;
+                document.getElementById('puntTotal').innerHTML = puntaje;
                 //console.log(puntaje)
             }
 
@@ -983,7 +989,11 @@ function animate() {
                 acciones.Attack.timeScale = 2;
                 acciones.Attack.play();
 
-                vida -= 50;
+                vida -= 5;
+
+                let fuerzaTexto = vida.toString().padStart(3, ' ');
+                document.getElementById('fuerza').innerHTML = 'Fuerza ' + fuerzaTexto + '/100';
+                actualizarBarraVida();
             }
         }
     });
@@ -1010,14 +1020,18 @@ function incrementaNivel() {
 
     noEnemigosNivel += 2;
     puntajeNivel = 0;
-}
 
-const intervalId = setInterval(incrementaNivel, 60000);
+    document.getElementById('puntObje').innerHTML = puntajeNivel;
+}
 
 function incrementaBalas() {
     //Cada nivel aumenta dos enemigos más para matar
     if (noBalas < 15)
         noBalas++;
+
+    let txt = noBalas.toString().padStart(2, ' ');
+    document.getElementById('noBalas').innerHTML = 'Munición ' + txt + '/15'
+    actualizarBarraMunicion();
 }
 
 const intervaBalaslId = setInterval(incrementaBalas, 1500);
@@ -1098,6 +1112,9 @@ function agregarBoton(txt = 'JUGAR AHORA', opc = 0) {
 
             document.body.requestPointerLock();
             container.addEventListener('mousedown', handleMouseDown);
+
+            iniciarTemporizador(60);
+            mostrarAlerta();
         } else {
             location.reload();
         }
@@ -1107,4 +1124,62 @@ function agregarBoton(txt = 'JUGAR AHORA', opc = 0) {
 function handleMouseDown() {
     document.body.requestPointerLock();
     mouseTime = performance.now();
+}
+
+function iniciarTemporizador(duracionSegundos) {
+    const timeElement = document.getElementById('time');
+    let tiempoInicio = Date.now();
+
+    function actualizar() {
+        const tiempoActual = Date.now();
+        const tiempoTranscurrido = tiempoActual - tiempoInicio;
+        const tiempoRestante = duracionSegundos * 1000 - (tiempoTranscurrido % (duracionSegundos * 1000));
+
+        const segundosRestantes = Math.floor(tiempoRestante / 1000);
+        const minutos = Math.floor(segundosRestantes / 60).toString().padStart(2, '0');
+        const segundos = (segundosRestantes % 60).toString().padStart(2, '0');
+
+        if (timeElement) {
+            timeElement.textContent = `${minutos}:${segundos}`;
+        }
+
+        // Cuando se cumple exactamente un ciclo completo
+        if (tiempoTranscurrido >= duracionSegundos * 1000) {
+            incrementaNivel();
+            mostrarAlerta();
+            tiempoInicio = Date.now(); // Reinicia el tiempo
+        }
+
+        requestAnimationFrame(actualizar);
+    }
+
+    actualizar();
+}
+
+function actualizarBarraMunicion() {
+    const porcentajeMunicion = (noBalas / 15) * 100;
+    const barraMunicion = document.getElementById('progressBarBullets');
+    barraMunicion.style.setProperty('width', porcentajeMunicion + '%', 'important');
+
+    // Actualizar el texto que muestra la munición
+    document.getElementById('noBalas').innerHTML = `Munición ${noBalas}/15`;
+}
+
+function actualizarBarraVida() {
+    const porcentajeVida = (vida / 100) * 100; // Supongo que la vida máxima es 100
+    const barraVida = document.getElementById('progressBarVida');
+    barraVida.style.setProperty('width', porcentajeVida + '%', 'important');
+
+    // Actualizar el texto que muestra la vida
+    document.getElementById('fuerza').innerHTML = `Fuerza ${vida}/100`;
+}
+
+function mostrarAlerta() {
+    const alerta = document.getElementById('modalAlerta');
+    document.getElementById('txtDescript').innerHTML = 'Debes de terminar con ' + noEnemigosNivel + ' zombies';
+    alerta.classList.add('mostrar'); // Muestra la alerta añadiendo la clase
+
+    setTimeout(() => {
+        alerta.classList.remove('mostrar'); // La oculta después de 3 segundos
+    }, 3000);
 }
