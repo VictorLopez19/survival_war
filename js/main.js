@@ -1146,7 +1146,10 @@ function iniciarTemporizador(duracionSegundos) {
         // Cuando se cumple exactamente un ciclo completo
         if (tiempoTranscurrido >= duracionSegundos * 1000) {
             incrementaNivel();
-            mostrarAlerta();
+            if (vida > 0){
+                mostrarAlerta();
+            }
+            
             tiempoInicio = Date.now(); // Reinicia el tiempo
         }
 
