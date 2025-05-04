@@ -747,7 +747,7 @@ function colocarEnemigos(min, size, cantidad) {
 
 function teleportPlayerIfOob() {
 
-    if (camera.position.y <= - 25) {
+    if (camera.position.y <= - 20) {
 
         playerCollider.start.set(0, 0.5, 0);
         playerCollider.end.set(0, 1, 0);
@@ -837,6 +837,8 @@ function animate() {
 
         clearInterval(intervalId);
         clearInterval(intervaBalaslId);
+
+        document.getElementById('three-container').classList.remove('show-border');
     }
 
     // we look for collisions in substeps to mitigate the risk of

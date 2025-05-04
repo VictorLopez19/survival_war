@@ -184,3 +184,110 @@ footer {
     height: auto;
 }
 
+.scoreboard {
+    z-index: 20 !important;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: row;
+    position: absolute; /* Para posicionar en la parte superior */
+    top: 0; /* Alinea al principio de la parte superior */
+    left: 50%; /* Centra horizontalmente */
+    transform: translateX(-50%); /* Ajuste fino para centrar completamente */
+    text-align: center;
+
+    width: auto !important;
+    height: auto !important;
+}
+
+.scoreboard div {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    margin: 0 15px;
+}
+
+.scoreboard div div{
+    width: 100px !important;
+    background-color: blue;
+}
+
+.scoreboard div:first-child i{
+    color: #3396ff;
+    font-size: 24px;
+    margin: 10px 0;
+}
+
+.scoreboard div:first-child div{
+    display: flex;
+    flex-direction: column;
+    justify-content: end;
+    align-items: end;
+    padding-right: 15px;
+    border-left: 3px solid #3396ff;
+    border-right: 3px solid #3396ff;
+    background-color: rgba(51, 150, 255, 0.5);
+}
+
+.scoreboard div:last-child i{
+    color: #fe1c1c;
+    font-size: 24px;
+    margin: 10px 0;
+}
+
+.scoreboard div:last-child div{
+    display: flex;
+    flex-direction: column;
+    justify-content: start;
+    align-items: start;
+    padding-left: 15px;
+    border-left: 3px solid #bd0505;
+    border-right: 3px solid #fe1c1c;
+    background-color: rgba(254, 28, 28, 0.5);
+}
+
+.mision, .time, .kills {
+    margin: 10px;
+    font-size: 14px;
+    color: white;
+}
+
+.stats {
+    z-index: 20 !important;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+    position: absolute; /* Para posicionar en la parte superior */
+    bottom: 0; /* Alinea al principio de la parte superior */
+    left: 50%; /* Centra horizontalmente */
+    transform: translateX(-50%); /* Ajuste fino para centrar completamente */
+    text-align: center;
+
+    width: auto !important;
+    height: auto !important;
+
+    color:white;
+    font-size: 12px;
+}
+
+.stats div{
+    width: 300px !important;
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    margin: 4px;
+}
+
+.stats div div{
+    width: 200px !important;
+    height: 7px !important;
+    background-color: #a80000;
+    border-radius: 10px;
+}
+
+.stats div:first-child div{
+    background-color: #ffc107;
+}
+
