@@ -39,7 +39,6 @@ const container = document.getElementById('three-container');
 const renderer = new THREE.WebGLRenderer({ antialias: true });
 renderer.setPixelRatio(window.devicePixelRatio);
 renderer.setSize(window.innerWidth, window.innerHeight);
-renderer.setAnimationLoop(animate);
 renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.VSMShadowMap;
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
@@ -76,6 +75,7 @@ let perdio = false;
 let noBalas = 15;
 
 let isAttack = false;
+let isPlay = false;
 
 /* SONIDOS */
 let shoot = new Audio('./assets/sounds/shoot.mp3');
@@ -234,6 +234,10 @@ function throwBall() {
         return;
     }
 
+    if (!isPlay){
+        return;
+    }
+
     const sphere = spheres[sphereIdx];
     camera.getWorldDirection(playerDirection);
 
@@ -261,16 +265,6 @@ function throwBall() {
     shoot.currentTime = 0;  // Reinicia el sonido si no se está reproduciendo
     shoot.volume = 0.2;
     shoot.play();
-
-    if (!estaReproduciendo(music)) {
-        reproducirMusic();
-    }
-
-    zombieAudios.forEach(audio => {
-        if (!audio.isPlaying && audio.buffer) {
-            audio.play();
-        }
-    });
 
     sphere.velocity.copy(playerDirection).multiplyScalar(impulse);
     sphere.velocity.addScaledVector(playerVelocity, 2);
@@ -581,7 +575,9 @@ const audioLoader = new THREE.AudioLoader();
 
 // Cargar mapa
 loader.load('Mapa_op.glb', (gltf) => {
-    document.getElementById('loadingMessage').classList.add('hidden');
+    document.getElementById('spinner').classList.add('hidden');
+    document.getElementById('txtSpinner').classList.add('hidden');
+    agregarBoton();
 
     const mapa = gltf.scene;
     mapa.scale.set(0.7, 0.7, 0.7);
@@ -1000,9 +996,9 @@ function animate() {
         }
     });
 
-    if (isAttack){
+    if (isAttack) {
         document.getElementById('three-container').classList.add('show-border');
-    }else{
+    } else {
         document.getElementById('three-container').classList.remove('show-border');
     }
 
@@ -1046,4 +1042,63 @@ function txtGameOver() {
     loadingMessage.appendChild(title);
 
     document.getElementById('three-container').appendChild(loadingMessage);
+    agregarBoton('JUGAR DE NUEVO');
+}
+
+function agregarBoton(txt = 'JUGAR AHORA') {
+    // Crear el contenedor <span>
+    const span = document.createElement('span');
+
+    // Crear el contenedor <div> con id 'btnControl' y la clase 'containerBtn'
+    const btnControl = document.createElement('div');
+    btnControl.id = 'btnControl';
+    btnControl.classList.add('containerBtn');
+
+    // Crear el enlace <a> con la clase 'button' y 'type--C'
+    const buttonLink = document.createElement('a');
+    buttonLink.href = '#';
+    buttonLink.classList.add('button', 'type--C');
+
+    // Crear el texto dentro del botón
+    const buttonText = document.createElement('span');
+    buttonText.classList.add('button__text');
+    buttonText.textContent = 'JUGAR AHORA';
+
+    // Agregar el texto al botón
+    buttonLink.appendChild(buttonText);
+
+    // Agregar el enlace al contenedor <div>
+    btnControl.appendChild(buttonLink);
+
+    // Agregar el contenedor <div> al contenedor <span>
+    span.appendChild(btnControl);
+
+    // Obtener el contenedor de carga por su ID y agregarle el <span>
+    const loadingMessage = document.getElementById('loadingMessage');
+    loadingMessage.appendChild(span);
+
+    // Agregar el evento de clic al botón
+    buttonLink.addEventListener('click', function (event) {
+        event.preventDefault();  // Prevenir la acción predeterminada del enlace (si es necesario)
+        renderer.setAnimationLoop(animate);
+        isPlay = true;
+
+        if (!estaReproduciendo(music)) {
+            reproducirMusic();
+        }
+    
+        zombieAudios.forEach(audio => {
+            if (!audio.isPlaying && audio.buffer) {
+                audio.play();
+            }
+        });
+
+        document.getElementById('loadingMessage').classList.add('hidden');
+
+        if (document.pointerLockElement === document.getElementById('three-container')) {
+            console.log("El puntero está bloqueado.");
+        } else {
+            console.log("El puntero no está bloqueado.");
+        }
+    });
 }

@@ -1,4 +1,5 @@
-html, body {
+html,
+body {
     height: 100%;
     margin: 0;
     overflow: hidden;
@@ -26,26 +27,28 @@ body {
 #three-container::before {
     content: '';
     position: absolute;
-    top: 0; left: 0;
+    top: 0;
+    left: 0;
     width: 100%;
     height: 100%;
     pointer-events: none;
     z-index: 200 !important;
 
-    background: radial-gradient(
-        ellipse at center,
-        rgba(255, 0, 0, 0) 40%,
-        rgba(255, 0, 0, 0.4) 70%,
-        rgba(147, 0, 0, 0.8) 90%,
-        rgb(144, 0, 0) 100%
-    );
+    background: radial-gradient(ellipse at center,
+            rgba(255, 0, 0, 0) 40%,
+            rgba(255, 0, 0, 0.4) 70%,
+            rgba(147, 0, 0, 0.8) 90%,
+            rgb(144, 0, 0) 100%);
 
-    opacity: 0; /* Inicialmente no visible */
-    transition: opacity 1s ease-in-out; /* Para transición suave */
+    opacity: 0;
+    /* Inicialmente no visible */
+    transition: opacity 1s ease-in-out;
+    /* Para transición suave */
 }
 
 #three-container.show-border::before {
-    opacity: 1; /* Se vuelve visible cuando se agrega esta clase */
+    opacity: 1;
+    /* Se vuelve visible cuando se agrega esta clase */
 }
 
 #three-container div {
@@ -53,7 +56,7 @@ body {
     height: 100%;
 }
 
-#three-container div div{
+#three-container div div {
     height: auto;
     width: auto;
     z-index: 0 !important;
@@ -105,7 +108,8 @@ body {
     text-align: justify;
 }
 
-.botones, .control {
+.botones,
+.control {
     font-size: 12px;
 }
 
@@ -115,7 +119,8 @@ body {
     left: 0;
     width: 100%;
     height: 100%;
-    background-image: url('../assets/img/back.jpg'); /* Cambia por la ruta real */
+    background-image: url('../assets/img/back.jpg');
+    /* Cambia por la ruta real */
     background-size: cover;
     background-position: center;
     display: flex;
@@ -133,12 +138,13 @@ body {
     left: 0;
     width: 100%;
     height: 100%;
-    background-color: rgba(0, 0, 0, 0.65); /* Oscurece la imagen */
+    background-color: rgba(0, 0, 0, 0.65);
+    /* Oscurece la imagen */
     z-index: 1;
 }
 
 /* Asegura que el contenido esté por encima del overlay */
-#loadingMessage > * {
+#loadingMessage>* {
     z-index: 2 !important;
 }
 
@@ -147,11 +153,24 @@ body {
     pointer-events: none;
 }
 
+#spinner.hidden, #txtSpinner.hidden{
+    opacity: 0;
+    width: 0 !important;
+    height: 0 !important;
+    pointer-events: none;
+}
+
+#spinner, #txtSpinner{
+    transition: opacity 1s ease; /* Transición suave de 0.5 segundos */
+    transition: width 1s ease;
+    transition: height 1s ease;
+}
+
 .game-title {
     font-family: 'Press Start 2P', cursive;
     font-size: 5em;
     color: white;
-    text-shadow: 
+    text-shadow:
         0 0 5px #a80000,
         0 0 10px #a80000,
         0 0 20px #a80000,
@@ -171,7 +190,9 @@ body {
 }
 
 @keyframes spin {
-    to { transform: rotate(360deg); }
+    to {
+        transform: rotate(360deg);
+    }
 }
 
 #loadingMessage p {
@@ -190,10 +211,14 @@ footer {
     justify-content: center;
     align-items: center;
     flex-direction: row;
-    position: absolute; /* Para posicionar en la parte superior */
-    top: 0; /* Alinea al principio de la parte superior */
-    left: 50%; /* Centra horizontalmente */
-    transform: translateX(-50%); /* Ajuste fino para centrar completamente */
+    position: absolute;
+    /* Para posicionar en la parte superior */
+    top: 0;
+    /* Alinea al principio de la parte superior */
+    left: 50%;
+    /* Centra horizontalmente */
+    transform: translateX(-50%);
+    /* Ajuste fino para centrar completamente */
     text-align: center;
 
     width: auto !important;
@@ -207,18 +232,18 @@ footer {
     margin: 0 15px;
 }
 
-.scoreboard div div{
+.scoreboard div div {
     width: 100px !important;
     background-color: blue;
 }
 
-.scoreboard div:first-child i{
+.scoreboard div:first-child i {
     color: #3396ff;
     font-size: 24px;
     margin: 10px 0;
 }
 
-.scoreboard div:first-child div{
+.scoreboard div:first-child div {
     display: flex;
     flex-direction: column;
     justify-content: end;
@@ -229,13 +254,13 @@ footer {
     background-color: rgba(51, 150, 255, 0.5);
 }
 
-.scoreboard div:last-child i{
+.scoreboard div:last-child i {
     color: #fe1c1c;
     font-size: 24px;
     margin: 10px 0;
 }
 
-.scoreboard div:last-child div{
+.scoreboard div:last-child div {
     display: flex;
     flex-direction: column;
     justify-content: start;
@@ -246,7 +271,9 @@ footer {
     background-color: rgba(254, 28, 28, 0.5);
 }
 
-.mision, .time, .kills {
+.mision,
+.time,
+.kills {
     margin: 10px;
     font-size: 14px;
     color: white;
@@ -258,20 +285,24 @@ footer {
     justify-content: center;
     align-items: center;
     flex-direction: column;
-    position: absolute; /* Para posicionar en la parte superior */
-    bottom: 0; /* Alinea al principio de la parte superior */
-    left: 50%; /* Centra horizontalmente */
-    transform: translateX(-50%); /* Ajuste fino para centrar completamente */
+    position: absolute;
+    /* Para posicionar en la parte superior */
+    bottom: 0;
+    /* Alinea al principio de la parte superior */
+    left: 50%;
+    /* Centra horizontalmente */
+    transform: translateX(-50%);
+    /* Ajuste fino para centrar completamente */
     text-align: center;
 
     width: auto !important;
     height: auto !important;
 
-    color:white;
+    color: white;
     font-size: 12px;
 }
 
-.stats div{
+.stats div {
     width: 300px !important;
     display: flex;
     flex-direction: row;
@@ -280,14 +311,13 @@ footer {
     margin: 4px;
 }
 
-.stats div div{
+.stats div div {
     width: 200px !important;
     height: 7px !important;
     background-color: #a80000;
     border-radius: 10px;
 }
 
-.stats div:first-child div{
+.stats div:first-child div {
     background-color: #ffc107;
 }
-
