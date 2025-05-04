@@ -75,10 +75,10 @@ let noEnemigosNivel = 10;
 let perdio = false;
 let noBalas = 15;
 
+let isAttack = false;
+
 /* SONIDOS */
 let shoot = new Audio('./assets/sounds/shoot.mp3');
-let zombi_walk = new Audio('./assets/sounds/zombi_walk.mp3');
-let zombi_attack = new Audio('./assets/sounds/zombi_attack.mp3');
 let music = new Audio('./assets/sounds/music.mp3');
 
 
@@ -625,17 +625,49 @@ function colocarEnemigos(min, size, cantidad) {
             // Clonamos el modelo base con un clon profundo para asegurar que materiales y geometrías se copien correctamente
             const clon = SkeletonUtils.clone(modeloBase);
 
-            const audio = new THREE.PositionalAudio(listener);
+            // Crear el primer audio para el sonido de caminar
+            const audioWalk = new THREE.PositionalAudio(listener);
             audioLoader.load('./assets/sounds/Zombie.mp3', (buffer) => {
-                audio.setBuffer(buffer);
-                audio.setRefDistance(0);
-                audio.setLoop(true);
-                audio.setVolume(2);
+                audioWalk.setBuffer(buffer);
+                audioWalk.setRefDistance(0);
+                audioWalk.setLoop(true);
+                audioWalk.setVolume(2);
 
-                audio.setMaxDistance(20);      // más allá de esto, apenas se escucha
-                audio.setDistanceModel('linear'); // puedes usar 'inverse' o 'exponential' también
-                zombieAudios.push(audio);
+                audioWalk.setMaxDistance(20);  // Más allá de esto, apenas se escucha
+                audioWalk.setDistanceModel('linear');  // Puedes usar 'inverse' o 'exponential' también
+
+                zombieAudios.push(audioWalk);  // Guardar el audio en el array de audios globales
+                clon.audioWalk = audioWalk;  // Asignar el audio de caminar al clon
             });
+
+            // Crear el segundo audio para el sonido de ataque
+            const audioAttack = new THREE.PositionalAudio(listener);
+            audioLoader.load('./assets/sounds/zombi_attack.mp3', (buffer) => {
+                audioAttack.setBuffer(buffer);
+                audioAttack.setRefDistance(0);
+                audioAttack.setLoop(true);
+                audioAttack.setVolume(1);
+
+                audioAttack.setMaxDistance(20);  // Más allá de esto, apenas se escucha
+                audioAttack.setDistanceModel('linear');  // Puedes usar 'inverse' o 'exponential' también
+
+                clon.audioAttack = audioAttack;  // Asignar el audio de ataque al clon
+            });
+
+            // Crear el segundo audio para el sonido de muerte
+            const audioDead = new THREE.PositionalAudio(listener);
+            audioLoader.load('./assets/sounds/zombie_dead.mp3', (buffer) => {
+                audioDead.setBuffer(buffer);
+                audioDead.setRefDistance(0);
+                audioDead.setLoop(true);
+                audioDead.setVolume(2);
+
+                audioDead.setMaxDistance(20);  // Más allá de esto, apenas se escucha
+                audioDead.setDistanceModel('linear');  // Puedes usar 'inverse' o 'exponential' también
+
+                clon.audioDead = audioDead;  // Asignar el audio de ataque al clon
+            });
+
 
             // Clonar materiales y geometrías para evitar referencias compartidas
             clon.traverse((node) => {
@@ -644,7 +676,9 @@ function colocarEnemigos(min, size, cantidad) {
                     node.geometry = node.geometry.clone();
                     node.castShadow = true;
                     node.receiveShadow = true;
-                    node.add(audio)
+                    node.add(audioAttack)
+                    node.add(audioWalk)
+                    node.add(audioDead)
 
                     if (node.material.isMeshStandardMaterial || node.material.isMeshPhysicalMaterial) {
                         // Mantiene el color original
@@ -795,6 +829,12 @@ function animate() {
             }
         });
 
+        enemigos.forEach((enemigo) => {
+            enemigo.mesh.audioWalk.pause();
+            enemigo.mesh.audioAttack.pause();
+            enemigo.mesh.audioDead.pause();
+        });
+
         clearInterval(intervalId);
         clearInterval(intervaBalaslId);
     }
@@ -822,6 +862,7 @@ function animate() {
 
     // Actualizar la posición de los enemigos
     const velocidadZombie = 0.01;
+    isAttack = false;
 
     enemigos.forEach((enemigo) => {
         const direccion = new THREE.Vector3();
@@ -855,8 +896,14 @@ function animate() {
 
                 if (acciones.Walk.isRunning()) {
                     acciones.Walk.stop();
+                    enemigo.mesh.audioWalk.pause();
                 } else {
                     acciones.Attack.stop();
+                    enemigo.mesh.audioAttack.pause();
+                }
+
+                if (!enemigo.mesh.audioDead.isPlaying) {
+                    enemigo.mesh.audioDead.play();
                 }
 
                 acciones.Dying.reset();
@@ -906,13 +953,19 @@ function animate() {
                 acciones.Walk.setLoop(THREE.LoopRepeat, Infinity);  // Repetir indefinidamente
                 acciones.Walk.timeScale = 2;
                 acciones.Walk.play();
-                document.getElementById('three-container').classList.remove('show-border');
+
+                if (!enemigo.mesh.audioWalk.isPlaying) {
+                    enemigo.mesh.audioWalk.play();
+                }
+
+                enemigo.mesh.audioAttack.pause();
             }
 
         } else {
 
             const clipDuracion = acciones.Attack.getClip().duration;
             const tiempoActual = acciones.Attack.time;
+            isAttack = true;
 
             if (acciones && !acciones.Attack.isRunning() && !isAnimating(acciones)) {
 
@@ -926,7 +979,11 @@ function animate() {
                 acciones.Attack.timeScale = 2;
                 acciones.Attack.play();
 
-                document.getElementById('three-container').classList.add('show-border');
+                enemigo.mesh.audioWalk.pause();
+
+                if (!enemigo.mesh.audioAttack.isPlaying) {
+                    enemigo.mesh.audioAttack.play();
+                }
             }
 
             if (tiempoActual >= clipDuracion) {
@@ -937,10 +994,15 @@ function animate() {
                 acciones.Attack.play();
 
                 vida -= 5;
-                console.log(vida)
             }
         }
     });
+
+    if (isAttack){
+        document.getElementById('three-container').classList.add('show-border');
+    }else{
+        document.getElementById('three-container').classList.remove('show-border');
+    }
 
     // Actualizar animaciones
     mixers.forEach(mixer => mixer.update(delta));
@@ -952,17 +1014,12 @@ function animate() {
 // Función que se ejecuta cada minuto
 function incrementaNivel() {
     //Cada nivel aumenta dos enemigos más para matar
-    console.log('Validando')
-
     if (noEnemigosNivel > puntajeNivel) {
         perdio = true;
     }
 
-    console.log(puntajeNivel)
     noEnemigosNivel += 2;
     puntajeNivel = 0;
-
-    console.log(noEnemigosNivel)
 }
 
 const intervalId = setInterval(incrementaNivel, 60000);
@@ -971,8 +1028,6 @@ function incrementaBalas() {
     //Cada nivel aumenta dos enemigos más para matar
     if (noBalas < 15)
         noBalas++;
-
-    console.log(noBalas)
 }
 
 const intervaBalaslId = setInterval(incrementaBalas, 1500);
