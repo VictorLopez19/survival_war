@@ -793,6 +793,29 @@ function animate() {
         clearInterval(intervaBalaslId);
         document.exitPointerLock();
         container.removeEventListener('mousedown', handleMouseDown);
+
+        enemigos.forEach(enemigo => {
+
+            if (enemigo.mesh.audioWalk.isPlaying) {
+                enemigo.mesh.audioWalk.setVolume(0);
+                enemigo.mesh.audioWalk.stop();
+            }
+
+            if (enemigo.mesh.audioAttack.isPlaying) {
+                enemigo.mesh.audioAttack.setVolume(0);
+                enemigo.mesh.audioAttack.stop();
+            }
+
+            if (enemigo.mesh.audioDead.isPlaying) {
+                enemigo.mesh.audioDead.setVolume(0);
+                enemigo.mesh.audioDead.stop();
+            }
+
+        });
+
+        if (esPuntajeAlto(puntaje)) {
+            mostrarModalRegistro();
+        }
     }
 
     // we look for collisions in substeps to mitigate the risk of
@@ -998,7 +1021,9 @@ function incrementaNivel() {
     noEnemigosNivel += 2;
     puntajeNivel = 0;
 
-    document.getElementById('puntObje').innerHTML = puntajeNivel;
+    if (document.getElementById('puntObje')) {
+        document.getElementById('puntObje').innerHTML = puntajeNivel;
+    }
 }
 
 function incrementaBalas() {
@@ -1124,10 +1149,10 @@ function iniciarTemporizador(duracionSegundos) {
         // Cuando se cumple exactamente un ciclo completo
         if (tiempoTranscurrido >= duracionSegundos * 1000) {
             incrementaNivel();
-            if (vida > 0){
+            if (vida > 0) {
                 mostrarAlerta();
             }
-            
+
             tiempoInicio = Date.now(); // Reinicia el tiempo
         }
 
@@ -1164,3 +1189,116 @@ function mostrarAlerta() {
         alerta.classList.remove('mostrar'); // La oculta después de 3 segundos
     }, 3000);
 }
+
+/* CODIFICACIÓN DE LOS PUNTAJES MÁS ALTOS */
+
+// Cargar puntajes desde localStorage
+function cargarPuntajes() {
+    const puntajes = JSON.parse(localStorage.getItem('highScores'));
+    return puntajes || []; // Si no hay puntajes, devuelve un array vacío
+}
+
+// Guardar puntajes en localStorage
+function guardarPuntajes(puntajes) {
+    localStorage.setItem('highScores', JSON.stringify(puntajes));
+}
+
+// Agregar nuevo puntaje si es récord y evitar duplicados
+function agregarPuntaje(nombre, puntaje) {
+    let puntajes = cargarPuntajes(); // Cargar puntajes actuales desde localStorage
+
+    // Verificar si el puntaje ya existe para el mismo nombre
+    const existePuntaje = puntajes.find(p => p.nombre === nombre);
+
+    if (existePuntaje) {
+        // Si el puntaje existente es mayor que el nuevo, no hacemos nada
+        if (existePuntaje.puntaje >= puntaje) {
+            console.log(`${nombre} ya tiene un puntaje mayor o igual.`);
+            return;
+        }
+        // Si el puntaje existente es menor, lo actualizamos
+        existePuntaje.puntaje = puntaje;
+    } else {
+        // Si no existe, agregamos un nuevo puntaje
+        puntajes.push({ nombre, puntaje });
+    }
+
+    // Ordenar los puntajes de mayor a menor
+    puntajes.sort((a, b) => b.puntaje - a.puntaje);
+
+    // Mantener solo los 5 más altos
+    puntajes = puntajes.slice(0, 5);
+
+    // Guardar en el localStorage
+    guardarPuntajes(puntajes);
+
+    console.log('Puntajes actualizados:', puntajes);
+}
+
+function esPuntajeAlto(puntaje) {
+    const puntajes = cargarPuntajes(); // Cargar los puntajes actuales
+
+    // Si hay menos de 5 puntajes, automáticamente entra
+    if (puntajes.length < 5) {
+        return true;
+    }
+
+    // Obtener el puntaje más bajo en la lista actual
+    const puntajeMasBajo = puntajes[puntajes.length - 1].puntaje;
+
+    // Si el nuevo puntaje es mayor que el más bajo, entra en el top 5
+    return puntaje > puntajeMasBajo;
+}
+
+// Función para mostrar los puntajes en el modal
+function mostrarPuntajes() {
+    const puntajes = cargarPuntajes(); // Cargar puntajes actuales desde localStorage
+    const modalBody = document.getElementById('modalPuntajesBody'); // Obtener el cuerpo del modal
+
+    if (puntajes.length === 0) {
+        modalBody.innerHTML = '<p class="text-center">No hay puntajes guardados.</p>'; // Mostrar mensaje si no hay puntajes
+    } else {
+        let html = '<div class="list-group">';
+        puntajes.forEach(p => {
+            html += `
+          <div class="list-group-item d-flex justify-content-between align-items-center">
+            <strong>${p.nombre}</strong>
+            <span class="badge bg-primary rounded-pill">${p.puntaje}</span>
+          </div>
+        `; // Agregar cada puntaje a la lista con estilo
+        });
+        html += '</div>';
+        modalBody.innerHTML = html; // Insertar los puntajes en el modal
+    }
+}
+
+// Función para mostrar el modal cuando el puntaje entra en el Top 5
+function mostrarModalRegistro() {
+    const modal = document.getElementById('modalRegistroPuntaje');
+    const bootstrapModal = new bootstrap.Modal(modal);
+    bootstrapModal.show();
+}
+
+// Función para guardar el puntaje ingresado
+function guardarNuevoPuntaje() {
+    const nombre = document.getElementById('nombreJugador').value.trim();
+
+    if (nombre === '') {
+        alert('Por favor, ingresa tu nombre.');
+        return;
+    }
+
+    agregarPuntaje(nombre, puntaje); // Guardar el puntaje en localStorage
+
+    // Cerrar el modal
+    const modal = document.getElementById('modalRegistroPuntaje');
+    const bootstrapModal = bootstrap.Modal.getInstance(modal);
+    bootstrapModal.hide();
+}
+
+window.onload = () => {
+    mostrarPuntajes();
+
+    const boton = document.getElementById('btnPuntaje');
+    boton.addEventListener('click', guardarNuevoPuntaje);
+};

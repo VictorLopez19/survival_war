@@ -129,6 +129,27 @@
 		</div>
 	</div>
 
+	<!-- Modal para registrar el puntaje -->
+    <div class="modal fade" id="modalRegistroPuntaje" tabindex="-1" aria-labelledby="modalRegistroPuntajeLabel"
+        aria-hidden="false">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="modalRegistroPuntajeLabel">¡Felicidades!</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body text-center">
+                    <p>Has logrado uno de los 5 mejores puntajes. Ingresa tu nombre para guardarlo.</p>
+                    <input type="text" id="nombreJugador" class="form-control text-center mt-2" placeholder="Tu nombre"
+                        maxlength="10">
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-primary" id="btnPuntaje">Guardar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
 	<!-- Contenedor de Three.js que ocupará el espacio restante -->
 	<div id="three-container">
 
