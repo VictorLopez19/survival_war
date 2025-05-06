@@ -68,7 +68,7 @@ let puntaje = 0;
 let vida = 100;
 
 let puntajeNivel = 0;
-let noEnemigosNivel = 25;
+let noEnemigosNivel = 15;
 
 let perdio = false;
 let noBalas = 15;
