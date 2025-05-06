@@ -960,6 +960,10 @@ function animate() {
             const tiempoActual = acciones.Attack.time;
             isAttack = true;
 
+            // Calcular la rotación del enemigo hacia el jugador
+            const angulo = Math.atan2(direccion.x, direccion.z);  // Calculamos el ángulo en radianes
+            enemigo.mesh.rotation.y = angulo;  // Aplicamos la rotación en el eje Y
+
             if (acciones && !acciones.Attack.isRunning() && !isAnimating(acciones)) {
 
                 if (acciones.Walk.isRunning()) {
@@ -1149,7 +1153,7 @@ function iniciarTemporizador(duracionSegundos) {
         // Cuando se cumple exactamente un ciclo completo
         if (tiempoTranscurrido >= duracionSegundos * 1000) {
             incrementaNivel();
-            if (vida > 0) {
+            if (vida > 0 && !perdio) {
                 mostrarAlerta();
             }
 
